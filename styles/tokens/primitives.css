@@ -1,0 +1,58 @@
+/* Raw values. Product and page CSS should consume semantic aliases instead. */
+:root {
+  --ref-color-white: #ffffff;
+  --ref-color-stone-0: #fbfaf7;
+  --ref-color-stone-50: #f7f7f2;
+  --ref-color-stone-100: #f4f2ed;
+  --ref-color-stone-150: #e9e7e0;
+  --ref-color-stone-200: #e7e4dc;
+  --ref-color-stone-300: #d5d8d2;
+  --ref-color-stone-450: #858b82;
+  --ref-color-stone-500: #646a63;
+  --ref-color-stone-600: #50574e;
+  --ref-color-stone-700: #383d37;
+  --ref-color-stone-850: #292d29;
+  --ref-color-stone-900: #20241f;
+  --ref-color-stone-950: #151815;
+  --ref-color-lime-300: #d7ff3f;
+  --ref-color-lime-400: #bfe82c;
+  --ref-color-lime-700: #647900;
+  --ref-color-lime-900: #52601b;
+  --ref-color-green-500: #5eac54;
+  --ref-color-green-700: #355c2e;
+  --ref-color-red-700: #8f1e16;
+  --ref-color-red-800: #b42318;
+
+  --ref-space-0: 0;
+  --ref-space-1: 0.125rem;
+  --ref-space-2: 0.25rem;
+  --ref-space-3: 0.5rem;
+  --ref-space-4: 0.75rem;
+  --ref-space-5: 1rem;
+  --ref-space-6: 1.25rem;
+  --ref-space-7: 1.5rem;
+  --ref-space-8: 2rem;
+  --ref-space-9: 2.5rem;
+  --ref-space-10: 3rem;
+  --ref-space-12: 4rem;
+  --ref-space-16: 5rem;
+  --ref-space-20: 6rem;
+  --ref-space-24: 8rem;
+  --ref-space-32: 10rem;
+
+  --ref-radius-sm: 0.625rem;
+  --ref-radius-md: 1rem;
+  --ref-radius-lg: 1.5rem;
+  --ref-radius-xl: 1.875rem;
+  --ref-radius-pill: 999px;
+
+  --ref-duration-instant: 70ms;
+  --ref-duration-fast: 140ms;
+  --ref-duration-base: 200ms;
+  --ref-duration-slow: 400ms;
+  --ref-duration-expressive: 700ms;
+  --ref-ease-standard: cubic-bezier(0.2, 0, 0.38, 0.9);
+  --ref-ease-enter: cubic-bezier(0, 0, 0.38, 0.9);
+  --ref-ease-exit: cubic-bezier(0.2, 0, 1, 0.9);
+  --ref-ease-expressive: cubic-bezier(0.4, 0.14, 0.3, 1);
+}

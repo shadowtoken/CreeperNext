@@ -1,0 +1,38 @@
+@layer components {
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .skip-link {
+    position: fixed;
+    z-index: 100;
+    top: 10px;
+    left: 10px;
+    min-height: var(--size-target-min);
+    padding: 10px 14px;
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius-control);
+    color: var(--color-text-inverse);
+    background: var(--color-bg-inverse);
+    transform: translateY(-160%);
+  }
+
+  .skip-link:focus { transform: translateY(0); }
+}
+
+@layer base {
+  :focus-visible {
+    outline: 3px solid var(--color-focus-ring);
+    outline-offset: 4px;
+    border-radius: 6px;
+  }
+}

@@ -1,0 +1,12 @@
+.root {
+  display: block;
+  margin-bottom: 1.375rem;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: 0.1em;
+}
+
+.inverse { color: var(--color-text-inverse-muted); }

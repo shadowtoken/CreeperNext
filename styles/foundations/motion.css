@@ -1,0 +1,29 @@
+:root {
+  --motion-instant: var(--ref-duration-instant);
+  --motion-fast: var(--ref-duration-fast);
+  --motion-base: var(--ref-duration-base);
+  --motion-slow: var(--ref-duration-slow);
+  --motion-expressive: var(--ref-duration-expressive);
+  --ease-standard: var(--ref-ease-standard);
+  --ease-enter: var(--ref-ease-enter);
+  --ease-exit: var(--ref-ease-exit);
+  --ease-expressive: var(--ref-ease-expressive);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-instant: 0.01ms;
+    --motion-fast: 0.01ms;
+    --motion-base: 0.01ms;
+    --motion-slow: 0.01ms;
+    --motion-expressive: 0.01ms;
+  }
+
+  html { scroll-behavior: auto; }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

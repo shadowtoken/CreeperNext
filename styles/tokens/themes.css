@@ -1,0 +1,26 @@
+/* Themes only override semantic roles; components never switch raw values. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg-canvas: #101210;
+  --color-bg-subtle: #1a1d1a;
+  --color-bg-muted: #242824;
+  --color-bg-inverse: var(--ref-color-stone-50);
+  --color-surface-default: #191c19;
+  --color-surface-raised: #202420;
+  --color-text-primary: var(--ref-color-stone-50);
+  --color-text-secondary: #bfc4bc;
+  --color-text-tertiary: #d5d8d2;
+  --color-text-inverse: var(--ref-color-stone-950);
+  --color-text-inverse-muted: var(--ref-color-stone-600);
+  --color-border-subtle: color-mix(in srgb, var(--ref-color-white) 16%, transparent);
+  --color-border-strong: #858b82;
+  --color-action-primary: var(--ref-color-stone-50);
+  --color-action-primary-hover: var(--ref-color-white);
+}
+
+[data-contrast="high"] {
+  --color-text-secondary: var(--color-text-primary);
+  --color-text-tertiary: var(--color-text-primary);
+  --color-border-subtle: currentColor;
+  --color-border-strong: currentColor;
+}

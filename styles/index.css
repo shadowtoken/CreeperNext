@@ -1,0 +1,10 @@
+/* Creeper Visual System: the only stylesheet imported by app/layout.tsx. */
+@import "tailwindcss";
+@import "./tokens/primitives.css";
+@import "./tokens/semantic.css";
+@import "./tokens/themes.css";
+@import "./foundations/motion.css";
+@import "./foundations/reset.css";
+@import "./foundations/document.css";
+@import "./foundations/accessibility.css";
+@import "./foundations/layout.css";
