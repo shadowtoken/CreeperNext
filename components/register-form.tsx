@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "../lib/auth-client";
 import { cn } from "../lib/cn";
+import { AuthPasswordInput } from "./auth-password-input";
 import { Button } from "./ui/button";
 import styles from "./auth-form.module.css";
 
@@ -76,28 +77,29 @@ export function RegisterForm({ returnTo }: { returnTo: string }) {
           required
         />
       </div>
-      <div className={cn(styles.fieldGrid, "grid-cols-1 @min-[24rem]/form:grid-cols-2")}>
+      <div className={styles.fieldGrid}>
         <div className={styles.field}>
-          <label htmlFor="register-password">密码</label>
-          <input
+          <div className={styles.labelRow}>
+            <label htmlFor="register-password">密码</label>
+            <span className={styles.hint} id="register-password-hint">至少 8 位字符</span>
+          </div>
+          <AuthPasswordInput
             id="register-password"
             name="password"
-            type="password"
             autoComplete="new-password"
             minLength={8}
             maxLength={128}
             placeholder="至少 8 位"
-            aria-describedby={error ? "register-error" : undefined}
+            aria-describedby={error ? "register-password-hint register-error" : "register-password-hint"}
             aria-invalid={error ? true : undefined}
             required
           />
         </div>
         <div className={styles.field}>
           <label htmlFor="register-confirmation">确认密码</label>
-          <input
+          <AuthPasswordInput
             id="register-confirmation"
             name="confirmation"
-            type="password"
             autoComplete="new-password"
             minLength={8}
             maxLength={128}
@@ -109,9 +111,8 @@ export function RegisterForm({ returnTo }: { returnTo: string }) {
         </div>
       </div>
       {error && <p className={styles.error} id="register-error" role="alert">{error}</p>}
-      <Button className={styles.submit} disabled={pending} type="submit">
+      <Button className={cn(styles.submit, "min-h-[3.25rem] rounded-[0.8125rem]")} disabled={pending} type="submit">
         {pending ? "正在创建…" : "创建账户"}
-        <span aria-hidden="true">→</span>
       </Button>
     </form>
   );

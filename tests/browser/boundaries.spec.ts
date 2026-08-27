@@ -12,7 +12,7 @@ test("page ranges stay valid one pixel around their thresholds", async ({ page }
     await expectResponsiveLayout(page);
     const register = await page.goto("/register");
     expect(register?.status()).toBe(200);
-    await expect(page.getByRole("heading", { level: 1, name: /创建你的起点/ })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: /创建账户/ })).toBeVisible();
     await expectResponsiveLayout(page);
   }
 });

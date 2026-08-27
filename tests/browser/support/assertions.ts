@@ -75,11 +75,31 @@ export async function expectResponsiveLayout(page: Page) {
       .filter((element) => isVisible(element) && !element.closest("[data-responsive-overflow-ok]"))
       .map((element) => ({ element, rect: element.getBoundingClientRect(), name: describe(element) }));
     const overlappingTargets: string[] = [];
+    const isIntentionalCompositeOverlap = (first: HTMLElement, second: HTMLElement) => {
+      const button = first instanceof HTMLButtonElement
+        ? first
+        : second instanceof HTMLButtonElement
+          ? second
+          : null;
+      const input = first instanceof HTMLInputElement
+        ? first
+        : second instanceof HTMLInputElement
+          ? second
+          : null;
+
+      return Boolean(
+        button
+        && input?.id
+        && button.getAttribute("aria-controls") === input.id
+        && button.parentElement === input.parentElement,
+      );
+    };
     for (let index = 0; index < targets.length; index += 1) {
       for (let compareIndex = index + 1; compareIndex < targets.length; compareIndex += 1) {
         const first = targets[index];
         const second = targets[compareIndex];
         if (first.element.contains(second.element) || second.element.contains(first.element)) continue;
+        if (isIntentionalCompositeOverlap(first.element, second.element)) continue;
         const overlapWidth = Math.min(first.rect.right, second.rect.right) - Math.max(first.rect.left, second.rect.left);
         const overlapHeight = Math.min(first.rect.bottom, second.rect.bottom) - Math.max(first.rect.top, second.rect.top);
         if (overlapWidth > 1 && overlapHeight > 1) {
@@ -159,6 +179,83 @@ export async function expectTouchTargets(page: Page) {
   });
 
   expect(undersized, "Creeper 的交互目标标准是 44×44 CSS px").toEqual([]);
+}
+
+export async function expectAuthTaskGeometry(page: Page) {
+  const geometry = await page.evaluate(() => {
+    const card = document.querySelector<HTMLElement>("[data-auth-card]");
+    const form = document.querySelector<HTMLFormElement>("[data-auth-form-region] form");
+    const title = card?.querySelector<HTMLElement>("h1");
+    const inputs = form
+      ? [...form.querySelectorAll<HTMLInputElement>("input:not([type='hidden']):not([type='checkbox']):not([type='radio'])")]
+      : [];
+    const submit = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+    if (!card || !form || !title || inputs.length === 0 || !submit) return null;
+
+    const cardRect = card.getBoundingClientRect();
+    const formRect = form.getBoundingClientRect();
+    const inputRects = inputs.map((input) => input.getBoundingClientRect());
+    const submitRect = submit.getBoundingClientRect();
+    const cardStyle = getComputedStyle(card);
+    const titleStyle = getComputedStyle(title);
+    const viewportWidth = document.documentElement.clientWidth;
+    const viewportHeight = window.innerHeight;
+
+    return {
+      viewportWidth,
+      viewportHeight,
+      card: {
+        left: cardRect.left,
+        width: cardRect.width,
+        centerOffset: (cardRect.left + cardRect.right) / 2 - viewportWidth / 2,
+        borderWidth: Number.parseFloat(cardStyle.borderTopWidth),
+        boxShadow: cardStyle.boxShadow,
+      },
+      formWidth: formRect.width,
+      inputs: inputRects.map((rect) => ({ left: rect.left, width: rect.width, height: rect.height })),
+      submit: { width: submitRect.width, height: submitRect.height, bottom: submitRect.bottom },
+      title: {
+        fontSize: Number.parseFloat(titleStyle.fontSize),
+        letterSpacing: Number.parseFloat(titleStyle.letterSpacing),
+      },
+    };
+  });
+
+  expect(geometry, "认证页必须渲染单一任务卡片、表单与主 CTA").not.toBeNull();
+  if (!geometry) return;
+
+  expect(Math.abs(geometry.card.centerOffset), "认证任务应在视口中水平居中").toBeLessThanOrEqual(1);
+  expect(geometry.card.width, "认证任务宽度不应超过 440px").toBeLessThanOrEqual(440.5);
+  expect(geometry.formWidth, "认证表单需要保留可用宽度").toBeGreaterThanOrEqual(279);
+
+  for (const input of geometry.inputs) {
+    expect(Math.abs(input.left - geometry.inputs[0].left), "认证字段始终保持单列对齐").toBeLessThanOrEqual(1);
+    expect(Math.abs(input.width - geometry.formWidth), "认证字段应填满表单宽度").toBeLessThanOrEqual(1);
+    expect(input.height, "认证输入框使用 52px 控件高度").toBeGreaterThanOrEqual(51.5);
+  }
+  expect(Math.abs(geometry.submit.width - geometry.formWidth), "主 CTA 应填满表单宽度").toBeLessThanOrEqual(1);
+  expect(geometry.submit.height, "主 CTA 使用 52px 控件高度").toBeGreaterThanOrEqual(51.5);
+  expect(geometry.title.fontSize, "中文认证标题不得小于 30px").toBeGreaterThanOrEqual(30);
+  expect(geometry.title.fontSize, "中文认证标题不得大于 40px").toBeLessThanOrEqual(40);
+  expect(geometry.title.letterSpacing, "中文标题不可使用展示型紧缩字距").toBeGreaterThan(-1.1);
+
+  if (geometry.viewportWidth === 320) {
+    expect(geometry.card.left, "320px 视口使用 20px 页边距").toBeCloseTo(20, 0);
+  }
+  if (geometry.viewportWidth === 390) {
+    expect(geometry.card.left, "390px 视口使用 24px 页边距").toBeCloseTo(24, 0);
+  }
+  if (geometry.viewportWidth < 640) {
+    expect(geometry.card.borderWidth, "移动端不绘制卡片边框").toBe(0);
+    expect(geometry.card.boxShadow, "移动端不使用重卡片阴影").toBe("none");
+  } else {
+    expect(geometry.card.width, "桌面端认证卡片维持 420–440px").toBeGreaterThanOrEqual(420);
+  }
+
+  const firstFoldHeight = geometry.inputs.length <= 2 ? 568 : 800;
+  if (geometry.viewportHeight >= firstFoldHeight) {
+    expect(geometry.submit.bottom, "主 CTA 应在常规首屏内可见").toBeLessThanOrEqual(geometry.viewportHeight + 1);
+  }
 }
 
 export async function authenticate(page: Page) {

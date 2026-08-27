@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Brand } from "../components/brand";
 import { Button } from "../components/ui/button";
 import { Kicker } from "../components/ui/kicker";
+import { siteConfig } from "../config/site";
 import "./globals.css";
 import styles from "./status.module.css";
 
@@ -17,7 +18,7 @@ export default function GlobalError({
     <html lang="zh-CN">
       <body>
         <main className={styles.page}>
-          <Link className={styles.brand} href="/" aria-label="Foundation 首页"><Brand /></Link>
+          <Link className={styles.brand} href="/" aria-label={`${siteConfig.name} 首页`}><Brand /></Link>
           <div className={styles.copy}>
             <Kicker>SYSTEM / ERROR</Kicker>
             <h1>结构还在，刚才那一步出了问题。</h1>

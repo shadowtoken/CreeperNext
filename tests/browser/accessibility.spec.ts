@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { authenticate } from "./support/assertions";
 
-const routes = ["/", "/login", "/register"] as const;
+const routes = ["/", "/login", "/register", "/two-factor"] as const;
 const semanticPairs = [
   ["canvas / primary", "--color-bg-canvas", "--color-text-primary"],
   ["canvas / secondary", "--color-bg-canvas", "--color-text-secondary"],

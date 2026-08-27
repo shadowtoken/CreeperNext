@@ -1,6 +1,6 @@
 export const siteConfig = {
-  name: "Foundation",
-  description: "一个轻量、现代、可扩展的 Next.js 产品脚手架。",
+  name: "CreeperNext",
+  description: "面向真实产品的现代 Next.js 起点。",
   ogImage: "/og.png",
 } as const;
 

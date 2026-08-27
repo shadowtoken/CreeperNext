@@ -8,7 +8,7 @@ import { getSession } from "../../../server/auth";
 
 export const metadata: Metadata = {
   title: "创建账户",
-  description: "创建 Foundation 账户，从一个可靠的地基开始。",
+  description: "创建 CreeperNext 账户，开始搭建你的产品。",
 };
 
 export default async function RegisterPage({
@@ -22,9 +22,9 @@ export default async function RegisterPage({
 
   return (
     <AuthShell
-      eyebrow="START BUILDING"
-      title="创建你的起点。"
-      description="基础版提供真实的邮箱注册与数据库会话。未来可以替换为 OAuth、Passkey 或企业 SSO。"
+      eyebrow="CREATE ACCOUNT"
+      title="创建账户"
+      description="只需一分钟，完成设置后即可开始使用 CreeperNext。"
       footer={<>已经有账户？<Link href="/login">直接登录</Link></>}
     >
       <RegisterForm returnTo={returnTo} />

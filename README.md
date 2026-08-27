@@ -3,7 +3,7 @@
 一个可直接启动的标准 Next.js 产品脚手架。它只提供大多数产品真正共用的地基：
 
 - 响应式 Landing Page
-- 邮箱注册、登录、退出与数据库会话
+- 邮箱注册、登录、退出、TOTP 双因素认证与数据库会话
 - 服务端鉴权与 fail-closed 受保护路由
 - 本地 UI 组件、Tailwind CSS 4 与语义 Design Tokens
 - CSS 动效 Token、Reduced Motion 和键盘可访问性
@@ -36,11 +36,39 @@ pnpm dev
 | 变量 | 用途 |
 | --- | --- |
 | `BETTER_AUTH_SECRET` | 会话签名密钥；生产环境必须使用独立高熵值 |
-| `BETTER_AUTH_URL` | Better Auth 的站点基准 URL |
+| `BETTER_AUTH_URL` | Better Auth 的 canonical/fallback URL；不从任意请求 Host 推断 |
+| `BETTER_AUTH_PROTOCOL` | 动态基准 URL 协议策略：`http`、`https` 或 `auto`；默认跟随 fallback URL |
+| `BETTER_AUTH_ALLOWED_HOSTS` | Better Auth 可用于动态解析基准 URL 的显式 Host 白名单 |
+| `BETTER_AUTH_TRUSTED_ORIGINS` | 可选的额外浏览器 Origin 白名单，多个值以逗号分隔 |
+| `AUTH_COOKIE_PREFIX` | 当前应用独有的 Cookie 前缀；仅允许 1–32 位字母、数字、`_`、`-` |
 | `AUTH_DB_PATH` | 本地 SQLite 数据库路径 |
 | `NEXT_PUBLIC_SITE_URL` | Metadata、Open Graph、robots 与 sitemap 的公开站点 URL |
+| `NEXT_ALLOWED_DEV_ORIGINS` | 仅开发环境：可加载 Next.js Dev Assets 的额外 Host，不写协议和端口 |
 
 `.env.local` 和数据库文件不会进入版本控制。
+
+`BETTER_AUTH_URL` 是认证服务的 canonical/fallback 地址。`BETTER_AUTH_ALLOWED_HOSTS` 让同一开发服务可以安全地通过多个显式 Host 访问；Better Auth 只会从匹配白名单的请求构造基准 URL，这些 Host 也会自动成为可信 Origin。局域网地址必须手工加入，例如：
+
+```dotenv
+BETTER_AUTH_URL=http://192.168.0.166:3100
+BETTER_AUTH_PROTOCOL=http
+BETTER_AUTH_ALLOWED_HOSTS=localhost:*,127.0.0.1:*,creeper.localhost:*,192.168.0.166:3100
+AUTH_COOKIE_PREFIX=creeper_next
+NEXT_ALLOWED_DEV_ORIGINS=127.0.0.1,creeper.localhost,192.168.0.166
+```
+
+Host 白名单只接受精确主机和端口，或仅对端口使用 `:*`；不允许任意主机通配。若独立前端 Origin 不等于这些 Host，再通过 `BETTER_AUTH_TRUSTED_ORIGINS` 逐项添加完整 http(s) URL；每项会被归一化为 `scheme + host + port`。可信 Origin 只负责 Better Auth 的 CSRF / 回调校验，真正跨站浏览器调用仍需在 HTTP 边界配置同一份精确 CORS allowlist 和 credentials，不能使用 `*`。不根据未经验证的 `Host` 动态放行。`BETTER_AUTH_PROTOCOL` 默认跟随 fallback URL：本地/LAN 的 HTTP 生产构建不会误发浏览器拒收的 Secure Cookie，HTTPS 部署仍默认使用 Secure Cookie；只有明确理解代理协议解析时才选 `auto`。生产配置应移除 localhost 和不再使用的地址。修改认证插件或数据库字段后，需要先执行 `pnpm auth:migrate`，再重启开发服务。
+
+### 同一浏览器同时开发多个项目
+
+Cookie 的隔离键包含名称、Domain 和 Path，**不包含端口**；Origin 则由协议、Host 和端口共同组成。因此 `http://localhost:3000` 与 `http://localhost:3100` 是两个不同 Origin，但访问它们时仍可能携带同一组 `localhost` Cookie。同名、同 Domain、同 Path 的 Cookie 会互相覆盖，这也是本地多项目最常见的“明明在另一个端口登录，却把当前项目会话弄乱”的根因。
+
+本脚手架采用两层隔离：
+
+- 每个项目设置独一无二的 `AUTH_COOKIE_PREFIX`，例如 `creeper_next`、`billing_console`；复制脚手架创建新项目时必须同步修改。
+- 对需要长期并行开发的项目使用不同本地域名，例如 `creeper.localhost:3100`、`billing.localhost:3101`，并把它们分别加入各自的 `BETTER_AUTH_ALLOWED_HOSTS`。
+
+不要把多个项目都配置成相同 Cookie 前缀，也不要在本地给认证 Cookie 设置共享的父级 Domain。端口仍然需要出现在可信 Origin 中，因为 CSRF 校验按完整 Origin 进行。调试认证接口时只发送当前项目实际产生的 Cookie；不要从浏览器复制整段跨项目 `Cookie` 请求头。手机或其他局域网设备访问 `next dev` 时，还需把该局域网 Host 加到 `NEXT_ALLOWED_DEV_ORIGINS`；它只开放开发期 HMR/静态资源，不参与生产认证放行。
 
 ## 整体工程结构
 
@@ -51,7 +79,8 @@ CreeperNext/
 │   ├── page.tsx                          # /；公开 Landing Page
 │   ├── (auth)/                            # 认证页面路由组；括号目录不会出现在 URL 中
 │   │   ├── login/page.tsx                # /login；登录页面
-│   │   └── register/page.tsx             # /register；注册页面
+│   │   ├── register/page.tsx             # /register；注册页面
+│   │   └── two-factor/page.tsx           # /two-factor；TOTP / 恢复码登录挑战
 │   ├── (protected)/                       # 受保护页面路由组；统一挂载服务端门禁
 │   │   ├── layout.tsx                    # 每次进入子页面前检查 Session，未登录则跳转
 │   │   └── account/page.tsx              # /account；最小受保护页面样板
@@ -67,8 +96,11 @@ CreeperNext/
 
 ├── components/                           # 可复用 React 组件；Tailwind-first，复杂视觉局部共置
 │   ├── ui/                               # Button、Kicker 等本地基础 UI 出口
+│   ├── auth-password-input.tsx           # 登录/注册密码显隐的无障碍组合控件
 │   ├── login-form.tsx                    # 登录交互 Client Component
 │   ├── register-form.tsx                 # 注册交互 Client Component
+│   ├── two-factor-challenge-form.tsx     # 第二因素登录挑战；支持 TOTP 与恢复码
+│   ├── two-factor-settings.tsx           # 启用、确认、恢复码轮换和关闭 2FA
 │   └── ...                               # Header、Footer、品牌和页面共享组件
 
 
@@ -115,7 +147,7 @@ CreeperNext/
 ├── components.json                        # shadcn CLI、别名和 Token 文件入口
 ├── playwright.config.ts                   # 生产式 Chromium、独立 DB 和失败产物
 ├── .github/workflows/quality.yml          # PR / main 自动质量门禁
-├── next.config.ts                         # Next.js 配置与安全响应头
+├── next.config.ts                         # Next.js、安全响应头与开发资源 Origin 白名单
 ├── postcss.config.mjs                     # Tailwind/PostCSS 构建配置
 ├── eslint.config.mjs                      # ESLint、React、Hooks 和可访问性规则
 ├── tsconfig.json                          # TypeScript 与 @/* 路径别名
@@ -219,13 +251,27 @@ app/layout.tsx
 
 ## 认证与存储
 
-基础版使用 Better Auth 和 Node 内置 SQLite，提供真实注册与持久会话。认证边界集中在三个位置：
+基础版使用 Better Auth 1.7 和 Node 内置 SQLite，提供真实注册、持久会话与 TOTP 双因素认证。认证边界集中在三个位置：
 
 - `server/auth-config.ts`：认证 Provider 和存储实现。
 - `server/auth.ts`：服务端页面消费的稳定会话接口。
 - `lib/auth-client.ts`：交互叶子使用的客户端接口。
 
 为了避免重复注册暴露邮箱是否存在，注册成功后不会自动登录；用户会回到登录页，再建立服务端会话。基础版没有发送验证邮件，因此“拥有这个邮箱”尚未被验证，不能把邮箱验证状态作为权限依据。生产项目应接入邮件发送服务并启用邮箱验证，或替换为 OAuth、Passkey、企业 SSO。
+
+### TOTP 双因素认证闭环
+
+登录用户可以在 `/account` 输入当前密码开始设置身份验证器。服务端生成 TOTP 密钥和十枚加密存储的恢复码，但在用户用首枚 6 位动态代码确认以前，`twoFactorEnabled` 保持关闭；这避免把未完成的绑定误认为有效第二因素。确认后，邮箱密码登录只会创建一个最长十分钟的第二因素挑战，不会提前建立业务 Session。`/two-factor` 可以用 TOTP 或一枚一次性恢复码完成挑战，并可选择只在私人设备上信任 30 天。
+
+恢复码只在首次启用或主动重新生成后显示；重新生成会让全部旧码立即失效，使用过的恢复码也不能再次使用。查看设置密钥、重新生成恢复码、关闭 2FA 都要求现有服务端 Session，其中敏感管理动作还会重新校验当前密码。登录挑战每次最多尝试五次，连续失败会触发账户级临时锁定。不要把 TOTP 密钥、动态码或恢复码写入日志、Analytics、错误追踪和持久浏览器存储。
+
+实现契约对应 Better Auth 官方的 [Two-Factor Authentication](https://better-auth.com/docs/plugins/2fa) 与 [Dynamic Base URL / Trusted Origins](https://better-auth.com/docs/reference/options) 文档；升级 Better Auth 时应先复核这两处协议，再运行完整认证测试。
+
+`twoFactor()` 会给 `user` 增加字段并创建 `twoFactor` 表；首次拉取这项改动或切换数据库后必须执行：
+
+```bash
+pnpm auth:migrate
+```
 
 当前 SQLite 配置适合本地开发，或带持久卷的单实例 Node 部署。它不适合无状态 Serverless、临时文件系统或多副本写入。部署到这类环境时，应把 `server/auth-config.ts` 的数据库替换为托管 PostgreSQL/MySQL 等持久存储，并在目标环境执行迁移；页面和组件不需要跟着改。
 
@@ -264,7 +310,7 @@ pnpm test:responsive
 pnpm audit --prod
 ```
 
-`pnpm test` 会构建生产版本、创建隔离的临时认证数据库，并验证 Landing、恶意跳转过滤、跨站认证拒绝、真实注册/登录会话、受保护路由、404、安全响应头、robots 与 sitemap。
+`pnpm test` 会构建生产版本、创建隔离的临时认证数据库，并验证 Landing、恶意跳转过滤、显式可信/恶意 Origin、真实注册/登录会话、TOTP 绑定与挑战、可信设备免挑战、恢复码重放拒绝、关闭 2FA、受保护路由、404、安全响应头、robots 与 sitemap。
 
 `pnpm test:responsive` 会再次使用生产构建和隔离数据库，在 9 个 Chromium 视口验证 Landing、Login、Register、404、真实登录态 Account、边界上下 1px、双轴可达性、元素与祖先裁切、控件重叠、44×44 目标、200% 文本放大、Reduced Motion、Light/Dark 对比度、错误态与 Axe。认证 Setup 只建立一次测试会话，不会为了绕过门禁而关闭生产限流。失败时保留 Screenshot、Video 和 Trace。
 

@@ -50,9 +50,27 @@ test("registration errors remain reachable on a touch viewport", async ({ page }
   await expectTouchTargets(page);
 });
 
+test("password visibility is explicit and reversible", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-390", "One touch project covers the composite control.");
+  await page.goto("/login");
+
+  const password = page.locator("#login-password");
+  const toggle = page.getByRole("button", { name: "显示密码" });
+  await expect(password).toHaveAttribute("type", "password");
+  await expect(toggle).toHaveAttribute("aria-controls", "login-password");
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+
+  await toggle.tap();
+  await expect(password).toHaveAttribute("type", "text");
+  await expect(page.getByRole("button", { name: "隐藏密码" })).toHaveAttribute("aria-pressed", "true");
+
+  await page.getByRole("button", { name: "隐藏密码" }).tap();
+  await expect(password).toHaveAttribute("type", "password");
+});
+
 test("200% text resizing preserves every core surface", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "compact-1280x800", "This is text resizing, not a DPR simulation.");
-  for (const route of ["/", "/login", "/register"] as const) {
+  for (const route of ["/", "/login", "/register", "/two-factor"] as const) {
     const response = await page.goto(route);
     expect(response?.status()).toBe(200);
     await page.evaluate(() => {

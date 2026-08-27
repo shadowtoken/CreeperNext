@@ -5,7 +5,14 @@
     background:
       radial-gradient(circle at 78% 18%, color-mix(in srgb, var(--color-action-accent) 26%, transparent), transparent 28rem),
       var(--color-bg-canvas);
-    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+    font-family:
+      var(--font-geist-sans),
+      "PingFang SC",
+      "Hiragino Sans GB",
+      "Microsoft YaHei",
+      ui-sans-serif,
+      system-ui,
+      sans-serif;
     text-rendering: optimizeLegibility;
   }
 

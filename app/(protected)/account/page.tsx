@@ -2,14 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Brand } from "../../../components/brand";
 import { SignOutButton } from "../../../components/sign-out-button";
+import { TwoFactorSettings } from "../../../components/two-factor-settings";
 import { ButtonLink } from "../../../components/ui/button-link";
 import { Kicker } from "../../../components/ui/kicker";
+import { siteConfig } from "../../../config/site";
 import { requireSession } from "../../../server/auth";
 import styles from "./account.module.css";
 
 export const metadata: Metadata = {
   title: "Account",
-  description: "Foundation 的最小受保护页面。",
+  description: `${siteConfig.name} 的最小受保护页面。`,
   robots: { index: false, follow: false },
 };
 
@@ -21,7 +23,7 @@ export default async function AccountPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <Link className={styles.brand} href="/" aria-label="Foundation 首页"><Brand /></Link>
+        <Link className={styles.brand} href="/" aria-label={`${siteConfig.name} 首页`}><Brand /></Link>
         <SignOutButton />
       </header>
 
@@ -49,6 +51,8 @@ export default async function AccountPage() {
             <p>Account 证明地基可用。接下来安装业务模块，而不修改认证和设计系统边界。</p>
             <ButtonLink className={styles.returnLink} href="/" variant="inverse">返回 Landing <span aria-hidden="true">→</span></ButtonLink>
           </article>
+
+          <TwoFactorSettings initiallyEnabled={Boolean(user.twoFactorEnabled)} />
         </div>
       </main>
     </div>

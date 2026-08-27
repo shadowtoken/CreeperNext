@@ -3,6 +3,7 @@ import { SiteFooter } from "../components/site-footer";
 import { SiteHeader } from "../components/site-header";
 import { ButtonLink } from "../components/ui/button-link";
 import { Kicker } from "../components/ui/kicker";
+import { siteConfig } from "../config/site";
 import { cn } from "../lib/cn";
 import Link from "next/link";
 import styles from "./page.module.css";
@@ -114,13 +115,13 @@ export default function Home() {
           </ul>
         </div>
         <div className={styles.authMiniCard}>
-          <div className={styles.miniBrand}><span>F</span></div>
+          <div className={styles.miniBrand}><span>C</span></div>
           <div>
             <span className={styles.miniLabel}>WELCOME</span>
             <h3>继续构建你的产品</h3>
             <p>登录后进入一个最小、真实受保护的 Account 页面。</p>
           </div>
-          <ButtonLink href="/login">登录 Foundation <span aria-hidden="true">→</span></ButtonLink>
+          <ButtonLink href="/login">登录 {siteConfig.name} <span aria-hidden="true">→</span></ButtonLink>
           <small>账户创建后，通过登录在服务端安全建立会话。</small>
         </div>
       </section>

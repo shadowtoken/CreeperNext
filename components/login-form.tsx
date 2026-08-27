@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "../lib/auth-client";
 import { cn } from "../lib/cn";
+import { AuthPasswordInput } from "./auth-password-input";
 import { Button } from "./ui/button";
 import styles from "./auth-form.module.css";
 
@@ -33,6 +34,12 @@ export function LoginForm({
       if (result.error) {
         setError("邮箱或密码不正确，请重新检查。");
         setPending(false);
+        return;
+      }
+
+      if (result.data && "twoFactorRedirect" in result.data && result.data.twoFactorRedirect) {
+        router.replace(`/two-factor?returnTo=${encodeURIComponent(returnTo)}`);
+        router.refresh();
         return;
       }
 
@@ -72,10 +79,9 @@ export function LoginForm({
       </div>
       <div className={styles.field}>
         <label htmlFor="login-password">密码</label>
-        <input
+        <AuthPasswordInput
           id="login-password"
           name="password"
-          type="password"
           autoComplete="current-password"
           minLength={8}
           maxLength={128}
@@ -86,9 +92,8 @@ export function LoginForm({
         />
       </div>
       {error && <p className={styles.error} id="login-error" role="alert">{error}</p>}
-      <Button className={styles.submit} disabled={pending} type="submit">
+      <Button className={cn(styles.submit, "min-h-[3.25rem] rounded-[0.8125rem]")} disabled={pending} type="submit">
         {pending ? "正在登录…" : "登录"}
-        <span aria-hidden="true">→</span>
       </Button>
     </form>
   );

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Brand } from "./brand";
 import { ButtonLink } from "./ui/button-link";
+import { siteConfig } from "../config/site";
 import { cn } from "../lib/cn";
 
 const navLinkClass =
@@ -9,7 +10,7 @@ const navLinkClass =
 export function SiteHeader() {
   return (
     <header className="page-container @container/header flex min-h-[var(--size-site-header-safe)] items-center justify-between border-b border-border pt-[env(safe-area-inset-top)]">
-      <Link className="inline-flex min-h-target items-center font-bold tracking-[-0.02em]" href="/" aria-label="Foundation 首页">
+      <Link className="inline-flex min-h-target items-center font-bold tracking-[-0.02em]" href="/" aria-label={`${siteConfig.name} 首页`}>
         <Brand />
       </Link>
       <nav className="flex items-center gap-[clamp(var(--ref-space-2),2cqi,var(--ref-space-5))] text-sm" aria-label="主导航">

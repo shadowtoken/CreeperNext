@@ -12,14 +12,14 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   openGraph: {
     type: "website",
-    title: "Foundation — 可靠的产品起点",
-    description: "从一个好地基，开始下一款产品。",
-    images: [{ url: siteConfig.ogImage, width: 1733, height: 908, alt: "Foundation 产品脚手架" }],
+    title: `${siteConfig.name} — 现代 Next.js 起点`,
+    description: siteConfig.description,
+    images: [{ url: siteConfig.ogImage, width: 1733, height: 908, alt: `${siteConfig.name} 产品脚手架` }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Foundation — 可靠的产品起点",
-    description: "从一个好地基，开始下一款产品。",
+    title: `${siteConfig.name} — 现代 Next.js 起点`,
+    description: siteConfig.description,
     images: [siteConfig.ogImage],
   },
 };
@@ -32,7 +32,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" data-scroll-behavior="smooth">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <a className="skip-link" href="#main-content" data-responsive-overflow-ok>跳到主要内容</a>
         {children}

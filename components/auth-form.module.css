@@ -1,13 +1,168 @@
 @layer components {
-  .form { display: grid; gap: 1.125rem; }
-  .fieldGrid { display: grid; gap: var(--ref-space-3); }
-  .field { min-width: 0; display: grid; gap: var(--ref-space-2); }
-  .field label { color: var(--color-text-tertiary); font-size: 0.75rem; font-weight: 650; }
-  .field input { width: 100%; min-height: 3rem; padding-inline: 0.875rem; border: 1px solid var(--color-border-strong); border-radius: 0.6875rem; outline: 0; color: var(--color-text-primary); background: color-mix(in srgb, var(--color-surface-raised) 76%, transparent); transition: border-color var(--motion-fast), box-shadow var(--motion-fast); }
+  .form {
+    width: 100%;
+    display: grid;
+    gap: var(--ref-space-5);
+  }
+
+  /* Auth forms stay intentionally single-column at every container width. */
+  .fieldGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ref-space-5);
+  }
+
+  .field {
+    min-width: 0;
+    display: grid;
+    gap: var(--ref-space-2);
+  }
+
+  .field label {
+    color: var(--color-text-primary);
+    font-size: 0.8125rem;
+    font-weight: 620;
+    line-height: 1.4;
+  }
+
+  .labelRow {
+    min-width: 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--ref-space-3);
+  }
+
+  .field input {
+    width: 100%;
+    min-height: 3.25rem;
+    padding-inline: var(--ref-space-4);
+    border: 1px solid var(--color-border-strong);
+    border-radius: 0.75rem;
+    outline: 0;
+    appearance: none;
+    color: var(--color-text-primary);
+    caret-color: var(--color-text-primary);
+    background: var(--color-surface-default);
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--color-text-primary) 3%, transparent) inset;
+    font-size: 1rem;
+    line-height: 1.25;
+    transition:
+      border-color var(--motion-fast) var(--motion-ease-standard),
+      box-shadow var(--motion-fast) var(--motion-ease-standard),
+      background-color var(--motion-fast) var(--motion-ease-standard);
+  }
+
   .field input::placeholder { color: var(--color-text-secondary); }
-  .field input:focus-visible { border-color: var(--color-focus-ring); box-shadow: var(--ds-shadow-focus); }
-  .error { margin: -0.125rem 0 0; color: var(--color-status-danger-text); font-size: 0.75rem; line-height: 1.5; }
-  .success { margin: 0; padding: 0.6875rem 0.8125rem; border: 1px solid color-mix(in srgb, var(--color-status-success-text) 24%, transparent); border-radius: var(--ds-radius-control); color: var(--color-status-success-text); background: color-mix(in srgb, var(--color-status-success) 10%, transparent); font-size: 0.75rem; line-height: 1.5; }
-  .submit { width: 100%; margin-top: 0.25rem; }
-  .submit span { margin-left: auto; }
+
+  .field input:hover:not(:focus) {
+    border-color: color-mix(in srgb, var(--color-text-primary) 55%, var(--color-border-strong));
+  }
+
+  .field input:focus-visible {
+    border-color: var(--color-focus-ring);
+    background: var(--color-surface-raised);
+    box-shadow: var(--ds-shadow-focus);
+  }
+
+  .field input[aria-invalid="true"] {
+    border-color: var(--color-status-danger-text);
+  }
+
+  .passwordControl {
+    position: relative;
+  }
+
+  .passwordControl input {
+    padding-inline-end: 3.5rem;
+  }
+
+  .passwordToggle {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: var(--ref-space-1);
+    width: var(--size-target-min);
+    min-height: var(--size-target-min);
+    margin-block: auto;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 0.625rem;
+    color: var(--color-text-secondary);
+    background: transparent;
+    cursor: pointer;
+    transition:
+      color var(--motion-fast) var(--motion-ease-standard),
+      background-color var(--motion-fast) var(--motion-ease-standard);
+  }
+
+  .passwordToggle:hover {
+    color: var(--color-text-primary);
+    background: var(--color-bg-muted);
+  }
+
+  .passwordToggle:focus-visible {
+    outline: 0;
+    box-shadow: var(--ds-shadow-focus);
+  }
+
+  .passwordToggle svg {
+    width: 1.125rem;
+    height: 1.125rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.75;
+  }
+
+  .field input:-webkit-autofill,
+  .field input:-webkit-autofill:hover,
+  .field input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--color-text-primary);
+    box-shadow: 0 0 0 1000px var(--color-surface-default) inset;
+    transition: background-color 9999s ease-out;
+  }
+
+  .hint {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+
+  .error,
+  .success {
+    margin: 0;
+    padding: var(--ref-space-3) var(--ref-space-4);
+    border-radius: 0.75rem;
+    font-size: 0.8125rem;
+    line-height: 1.55;
+  }
+
+  .error {
+    border: 1px solid color-mix(in srgb, var(--color-status-danger-text) 28%, transparent);
+    color: var(--color-status-danger-text);
+    background: color-mix(in srgb, var(--color-status-danger) 7%, transparent);
+  }
+
+  .success {
+    border: 1px solid color-mix(in srgb, var(--color-status-success-text) 26%, transparent);
+    color: var(--color-status-success-text);
+    background: color-mix(in srgb, var(--color-status-success) 9%, transparent);
+  }
+
+  .submit {
+    position: relative;
+    width: 100%;
+    margin-block-start: var(--ref-space-1);
+  }
+}
+
+@media (forced-colors: active) {
+  .field input,
+  .error,
+  .success { background: Field; }
+
+  .passwordToggle { color: ButtonText; }
 }

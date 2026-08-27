@@ -8,7 +8,7 @@ import { getSession } from "../../../server/auth";
 
 export const metadata: Metadata = {
   title: "登录",
-  description: "登录 Foundation，继续构建你的产品。",
+  description: "登录 CreeperNext，继续你的工作。",
 };
 
 export default async function LoginPage({
@@ -23,10 +23,10 @@ export default async function LoginPage({
 
   return (
     <AuthShell
-      eyebrow="WELCOME BACK"
-      title="继续你的构建。"
-      description="使用邮箱和密码登录。会话只在服务端读取，业务页面不直接依赖认证库。"
-      footer={<>第一次来？<Link href="/register">创建账户</Link></>}
+      eyebrow="CREEPER ACCOUNT"
+      title="欢迎回来"
+      description="使用邮箱和密码登录 CreeperNext，继续你的工作。"
+      footer={<>还没有账户？<Link href="/register">免费创建</Link></>}
     >
       <LoginForm registered={params.registered === "1"} returnTo={returnTo} />
     </AuthShell>
