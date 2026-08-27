@@ -14,8 +14,13 @@
   --color-text-link: var(--ref-color-stone-700);
   --color-text-inverse: var(--ref-color-white);
   --color-text-inverse-muted: var(--ref-color-stone-300);
+  --color-text-on-primary: var(--color-text-inverse);
+  --color-text-on-accent: var(--ref-color-stone-950);
+  --color-text-on-danger: var(--ref-color-white);
+  --color-text-accent-on-inverse: var(--color-action-accent);
   --color-border-subtle: color-mix(in srgb, var(--ref-color-stone-950) 14%, transparent);
   --color-border-strong: var(--ref-color-stone-450);
+  --color-border-inverse: color-mix(in srgb, var(--color-text-inverse) 28%, transparent);
   --color-action-primary: var(--ref-color-stone-950);
   --color-action-primary-hover: var(--ref-color-stone-850);
   --color-action-accent: var(--ref-color-lime-300);
@@ -29,73 +34,32 @@
   --color-status-danger-text: var(--ref-color-red-700);
 
   --space-page-gutter: clamp(0.875rem, 3vw, 2.5rem);
-  --space-section-block: clamp(6rem, 11vw, 10rem);
+  --space-page-gutter-inline-safe: max(
+    var(--space-page-gutter),
+    env(safe-area-inset-left),
+    env(safe-area-inset-right)
+  );
+  --space-page-gutter-block-end-safe: max(
+    var(--space-page-gutter),
+    env(safe-area-inset-bottom)
+  );
+  --space-section-block: clamp(5rem, min(11vw, 16svh), 10rem);
   --size-content-max: 73.75rem;
   --size-content-wide: 77.5rem;
   --size-content-reading: 43rem;
   --size-layout-card-min: 18rem;
   --size-layout-panel-min: 26rem;
   --size-target-min: 2.75rem;
+  --size-site-header: clamp(4.375rem, 3.75rem + 1.5vw, 5.25rem);
+  --size-site-header-safe: calc(var(--size-site-header) + env(safe-area-inset-top));
 
-  --radius-control: var(--ref-radius-sm);
-  --radius-card: var(--ref-radius-lg);
-  --radius-dialog: var(--ref-radius-xl);
-  --radius-pill: var(--ref-radius-pill);
+  --ds-radius-control: var(--ref-radius-sm);
+  --ds-radius-card: var(--ref-radius-lg);
+  --ds-radius-dialog: var(--ref-radius-xl);
+  --ds-radius-pill: var(--ref-radius-pill);
 
-  --shadow-raised: 0 1.125rem 3rem color-mix(in srgb, var(--ref-color-stone-950) 5%, transparent);
-  --shadow-overlay: 0 1.875rem 5rem color-mix(in srgb, var(--ref-color-stone-950) 12%, transparent);
-  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--color-focus-ring) 18%, transparent);
-
-  /* shadcn/Tailwind compatibility aliases. */
-  --background: var(--color-bg-canvas);
-  --foreground: var(--color-text-primary);
-  --text-muted: var(--color-text-secondary);
-  --line: var(--color-border-subtle);
-  --surface: color-mix(in srgb, var(--color-surface-raised) 66%, transparent);
-  --card: var(--color-surface-default);
-  --card-foreground: var(--color-text-primary);
-  --popover: var(--color-surface-default);
-  --popover-foreground: var(--color-text-primary);
-  --primary: var(--color-action-primary);
-  --primary-foreground: var(--color-text-inverse);
-  --secondary: var(--color-bg-muted);
-  --secondary-foreground: var(--ref-color-stone-900);
-  --muted: var(--color-bg-subtle);
-  --muted-foreground: var(--color-text-secondary);
-  --accent: var(--color-action-accent);
-  --accent-foreground: var(--color-text-primary);
-  --accent-strong: var(--color-action-accent-strong);
-  --destructive: var(--color-status-danger);
-  --destructive-foreground: var(--color-text-inverse);
-  --border: var(--color-border-subtle);
-  --input: var(--color-border-strong);
-  --ring: var(--color-focus-ring);
-  --radius-sm: var(--ref-radius-sm);
-  --radius-md: var(--ref-radius-md);
-  --radius-lg: var(--ref-radius-lg);
-  --shadow: var(--shadow-overlay);
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --ds-shadow-raised: 0 1.125rem 3rem color-mix(in srgb, var(--ref-color-stone-950) 5%, transparent);
+  --ds-shadow-overlay: 0 1.875rem 5rem color-mix(in srgb, var(--ref-color-stone-950) 12%, transparent);
+  --ds-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--color-focus-ring) 18%, transparent);
+  --ds-shadow-button: 0 0.5rem 1.25rem color-mix(in srgb, var(--color-action-primary) 13%, transparent);
 }

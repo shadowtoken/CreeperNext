@@ -4,10 +4,10 @@
   --motion-base: var(--ref-duration-base);
   --motion-slow: var(--ref-duration-slow);
   --motion-expressive: var(--ref-duration-expressive);
-  --ease-standard: var(--ref-ease-standard);
-  --ease-enter: var(--ref-ease-enter);
-  --ease-exit: var(--ref-ease-exit);
-  --ease-expressive: var(--ref-ease-expressive);
+  --motion-ease-standard: var(--ref-ease-standard);
+  --motion-ease-enter: var(--ref-ease-enter);
+  --motion-ease-exit: var(--ref-ease-exit);
+  --motion-ease-expressive: var(--ref-ease-expressive);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "../lib/auth-client";
+import { cn } from "../lib/cn";
 import { Button } from "./ui/button";
 import styles from "./auth-form.module.css";
 
@@ -49,7 +50,7 @@ export function LoginForm({
   ].filter(Boolean).join(" ") || undefined;
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
+    <form className={cn(styles.form, "@container/form")} onSubmit={handleSubmit}>
       {registered && (
         <p className={styles.success} id="login-notice" role="status">
           账户已创建，请登录以建立会话。

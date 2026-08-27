@@ -1,0 +1,29 @@
+/*
+ * Third-party compatibility boundary.
+ * Registry components may consume these conventional names; product code consumes
+ * Creeper semantic tokens or Tailwind utilities instead.
+ */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  --background: var(--color-bg-canvas);
+  --foreground: var(--color-text-primary);
+  --card: var(--color-surface-default);
+  --card-foreground: var(--color-text-primary);
+  --popover: var(--color-surface-default);
+  --popover-foreground: var(--color-text-primary);
+  --primary: var(--color-action-primary);
+  --primary-foreground: var(--color-text-inverse);
+  --secondary: var(--color-bg-muted);
+  --secondary-foreground: var(--color-text-primary);
+  --muted: var(--color-bg-subtle);
+  --muted-foreground: var(--color-text-secondary);
+  --accent: var(--color-action-accent);
+  --accent-foreground: var(--color-text-on-accent);
+  --destructive: var(--color-status-danger);
+  --destructive-foreground: var(--color-text-on-danger);
+  --border: var(--color-border-subtle);
+  --input: var(--color-border-strong);
+  --ring: var(--color-focus-ring);
+  --radius: var(--ds-radius-control);
+}

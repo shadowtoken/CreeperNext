@@ -3,8 +3,9 @@
 @import "./tokens/primitives.css";
 @import "./tokens/semantic.css";
 @import "./tokens/themes.css";
+@import "./adapters/shadcn.css";
+@import "./adapters/tailwind.css";
 @import "./foundations/motion.css";
 @import "./foundations/reset.css";
 @import "./foundations/document.css";
 @import "./foundations/accessibility.css";
-@import "./foundations/layout.css";

@@ -1,143 +1,165 @@
 # Creeper Visual System
 
-Creeper Visual System 是 CreeperNext 的视觉与交互契约。它独立于具体页面和第三方组件库，目标不是让所有页面长得一样，而是让 Landing、认证、产品端和未来 Admin 在同一套质量标准上形成各自的表达。
+Creeper Visual System 是 CreeperNext 的视觉与交互契约。它不要求 Landing、C 端和未来 Admin 长得一样，而是要求它们共享同一套 Token、组件边界、响应模型与质量门禁。
 
-## 1. 分层模型
+## 1. 分层与依赖方向
 
 ```text
 Primitive Tokens
   ↓
-Semantic Tokens + Themes
+Semantic Tokens + Runtime Themes
   ↓
-Foundations（Reset / Document / Accessibility / Layout / Motion）
+Adapters（Tailwind / shadcn）
   ↓
-UI Components（Button / Field / Card / Dialog…）
+Foundations（Document / Accessibility / Motion）
   ↓
-Patterns（Auth Form / Hero / Empty State / App Shell…）
+UI Components（Button / Field / Dialog…）
+  ↓
+Patterns（Auth Form / Hero / App Shell…）
   ↓
 Pages（Marketing / Product / Admin）
   ↓
-Visual + Responsive + Accessibility QA
+Responsive + Accessibility + Visual QA
 ```
 
-依赖只能从上向下。Token 不依赖组件；基础组件不依赖业务 Pattern；页面可以组合所有下层能力。
+依赖只能向下消费：Token 不知道组件；Adapter 只翻译 Token；基础 UI 不依赖业务 Pattern；页面可以组合所有下层能力。
 
 ## 2. 文件职责
 
 ```text
 styles/
-├── index.css                    # 全局唯一入口和确定的导入顺序
+├── index.css                    # 唯一视觉入口与确定的导入顺序
 ├── tokens/
-│   ├── primitives.css          # 原始色阶、间距、圆角、时长和缓动
-│   ├── semantic.css            # 用途命名、Tailwind 映射和 shadcn 兼容变量
-│   └── themes.css              # Light 之外的主题只覆盖语义 Token
+│   ├── primitives.css          # 原始色阶、间距、圆角、时长、缓动
+│   ├── semantic.css            # 运行时用途、密度、尺寸、Safe Area
+│   └── themes.css              # Dark / High Contrast 只覆盖语义角色
+├── adapters/
+│   ├── tailwind.css            # @theme 映射与共享 Utility
+│   └── shadcn.css              # 第三方 Registry 兼容变量
 └── foundations/
-    ├── reset.css               # 浏览器基础归一
+    ├── reset.css               # 对 Tailwind Preflight 的项目增量
     ├── document.css            # html/body/链接等文档级规则
     ├── accessibility.css       # Focus、Skip Link、sr-only
-    ├── layout.css              # Container、Stack、Inline、Grid 原语
-    └── motion.css              # Productive / Expressive 动效节奏
+    └── motion.css              # Productive / Expressive 与 Reduced Motion
 
 app/globals.css                 # 只导入 styles/index.css
-app/*.module.css                # 页面独有布局和艺术方向
-components/**/*.module.css      # 组件结构、Variant 和交互状态
+app/*.module.css                # 页面独有布局与艺术方向
+components/**/*.module.css      # 复杂局部视觉；常规 UI 优先 Tailwind
 ```
+
+`components.json` 指向 `styles/adapters/shadcn.css`。第三方 CLI 可以修改兼容边界，但不会把 Registry 变量、Import 或 Base Rule 写进核心 Semantic Token。
 
 ## 3. Token 规则
 
-### Primitive Token
+### Primitive
 
-Primitive 表达“值是什么”，以 `--ref-*` 开头，例如：
+Primitive 表达“值是什么”，以 `--ref-*` 开头：
 
 ```css
 --ref-color-lime-300: #d7ff3f;
---ref-space-7: 1.5rem;
+--ref-space-6: 1.5rem;
 --ref-duration-fast: 140ms;
 ```
 
-只有 `styles/tokens/primitives.css` 和主题实现可以直接声明原始色值。页面和组件不能直接消费原始颜色 Primitive，除非它是在实现插画、数据可视化或一次性品牌效果，并经过明确审查。间距、圆角和时长这类稳定 Scale 可以直接消费，但如果表达了页面层级、控件角色或状态，仍应先建立 Semantic Token。
+间距数字与 Tailwind 的 quarter-rem Scale 对齐：`2 = 0.5rem`、`4 = 1rem`、`6 = 1.5rem`。相同数字不能在两套系统里表达不同距离。
 
-### Semantic Token
+页面和组件不能直接消费原始颜色 Primitive，除非实现插画、数据可视化或一次性品牌效果，并经过审查。间距和时长可以消费稳定 Scale；一旦它表达页面层级、控件角色或状态，就建立 Semantic Token。
+
+### Semantic
 
 Semantic 表达“值用来做什么”：
 
 ```css
 --color-text-primary: var(--ref-color-stone-950);
---color-surface-raised: var(--ref-color-white);
 --color-action-accent: var(--ref-color-lime-300);
---space-page-gutter: clamp(0.875rem, 3vw, 2.5rem);
+--space-page-gutter-inline-safe: max(...);
+--ds-radius-control: var(--ref-radius-sm);
 ```
 
-组件和页面默认只使用 Semantic Token。命名按 `category-role-state` 组织，不按视觉近似选择变量。不要因为两个颜色当前相同，就把成功状态绑定到品牌色。
+语义 Token 是运行时主题 API。命名按 `category-role-state` 组织，不按当前视觉近似绑定。裸 `--radius-sm`、`--shadow` 等 Tailwind Theme Namespace 不在 Semantic 文件重定义，避免隐式半覆盖。
 
-### Component Token
+### Adapter
 
-只有同一视觉决定被一个复杂组件的多个子元素或 Variant 反复消费时，才在组件的 `.module.css` 内建立 Component Token：
+Tailwind 是 Token Consumer，不是 Token Source：
 
 ```css
-.root {
-  --button-bg-rest: var(--color-action-primary);
-  --button-bg-hover: var(--color-action-primary-hover);
+@theme inline {
+  --color-primary: var(--color-action-primary);
+  --spacing-page-safe: var(--space-page-gutter-inline-safe);
+  --radius-control: var(--ds-radius-control);
+  --shadow-raised: var(--ds-shadow-raised);
 }
 ```
 
-组件 Token 不进入全局空间，不被页面直接使用。
+因此 JSX 可以使用 `bg-primary`、`min-h-target`、`rounded-control`、`shadow-raised`，Dark / High Contrast 仍只需覆盖 Semantic Token。
 
-## 4. 两种视觉表面
+### Component Token
 
-### Marketing Surface
+只有一个复杂组件的多个子元素或 Variant 重复消费同一决定时，才在组件作用域建立 Token：
 
-Landing、定价和活动页属于表达型表面，可以使用：
-
-- Display Typography、宽松 Section Rhythm 和非对称 Grid；
-- 品牌图像、插画、纹理和有限的装饰性效果；
-- 只服务叙事的页面级 CSS Module；
-- 在关键时刻使用 Expressive Motion。
-
-Marketing 仍必须遵守对比度、触控目标、Reduced Motion、内容顺序和窄屏布局规范。
-
-### Product Surface
-
-账户、SaaS C 端和未来 Admin 属于生产力表面，应优先：
-
-- 稳定的信息层级和可预测布局；
-- 更高但可调节的信息密度；
-- 完整的 Loading、Empty、Error、Success 和 Permission 状态；
-- 快速、低干扰的 Productive Motion；
-- 键盘操作、焦点管理和屏幕阅读顺序。
-
-两种表面共享 Token、基础组件和无障碍底线，但不强迫使用同一种页面构图。
-
-## 5. 布局与响应式
-
-公开布局原语位于 `styles/foundations/layout.css`：
-
-```tsx
-<div className="l-container">
-  <div className="l-stack" style={{ "--stack-gap": "var(--ref-space-8)" } as React.CSSProperties}>
-    ...
-  </div>
-</div>
+```css
+.root {
+  --button-icon-size: 1rem;
+}
 ```
 
-- `l-container`：统一最大宽度和 Safe Gutter；
-- `l-stack`：垂直关系，由父级控制间距；
-- `l-inline`：横向排列并允许换行；
-- `l-grid`：通过 `auto-fit + minmax()` 按内容最小宽度自动换列；复杂页面使用局部 CSS Module。
+Component Token 不进入全局空间，也不被页面直接使用。
 
-响应式不是“没有断点”，也不是“为 iPhone、iPad、桌面各写一套”。本项目按以下优先级选择能力：
+## 4. Tailwind-first 混合架构
 
-1. 先用百分比、`min()`、`max()`、`clamp()`、Flex 换行和 Intrinsic Grid 连续适配；
-2. 组件根据自身容器使用 Container Query，不猜测整个浏览器有多宽；
-3. 页面级 Viewport Query 只处理导航层级、全屏模式等真正与视口有关的变化；
-4. Hover、Pointer、Reduced Motion 等能力使用对应的 Media Feature，不从屏幕宽度推断；
-5. 320、390、768、1024、1440 等只是 QA 样本，不是必须写进 CSS 的设备断点。
+“混合”不是同一套样式写两遍，而是明确分工：
 
-固定组件最小触控目标为 `--size-target-min`（44px）。优先使用 `svh` / `dvh`，避免依赖移动浏览器不稳定的传统 `100vh`。完整的断点决策、H5 规则、图片策略和测试矩阵见 [`responsive-design.md`](responsive-design.md)。
+| 能力 | 负责人 |
+| --- | --- |
+| 常规 Flex/Grid、Spacing、Size、State、Viewport Variant | Tailwind Utility |
+| 基础组件 Variant / Compound State | Typed Class Map；复杂后再用 CVA |
+| 可复用组件响应式 | Tailwind Named Container Query |
+| 渐变、伪元素、复杂选择器、插画、页面艺术构图 | CSS Modules |
+| 主题、密度、品牌值、Safe Area | CSS Variables |
+| 文档行为、Focus、Reduced Motion、Forced Colors | Foundations CSS |
 
-## 6. 组件契约
+Header 与 Button 是参考实现：
 
-业务代码只从 `components/ui` 使用基础 UI。shadcn、Base UI、Radix、React Aria 或其他组件先进入本地 UI 边界，再适配本项目的 Token、RSC 边界和状态规范。
+- Header 用 `@container/header` 和 `@min-*/header` 控制自身导航，不猜 Viewport；
+- Button 用 Typed Class Map 暴露 `variant` / `size`，`cn()` 让调用方 Tailwind class 可靠覆盖；
+- Foundation Preview 保留 CSS Module，因为旋转、玻璃表面、伪元素和内部构图属于艺术样式。
+
+不为了“看起来都用了 Tailwind”把长串渐变塞进 JSX，也不把普通 `display/grid/gap` 全藏进 CSS Module。
+
+## 5. Cascade 与 CSS 所有权
+
+Next.js 生产构建会合并和切分 CSS，导入顺序必须可预测。项目遵守：
+
+1. 全局与 Tailwind 只从根 `app/globals.css` 进入；
+2. `styles/index.css` 固定 Token → Adapter → Foundation 顺序；
+3. 可复用 CSS Module 若允许调用方 `className` 覆盖，规则放在 `@layer components`，让 Tailwind `utilities` 层获胜；
+4. Page CSS Module 是艺术方向的权威层；同一元素不再用 Tailwind 改相同属性；
+5. 不依赖组件导入顺序争夺同一属性；共享决定提取为 UI Component 或 Token。
+
+`twMerge()` 只合并 Tailwind 类，无法处理 unlayered CSS Module。以下写法禁止：
+
+```tsx
+// Module 和 Utility 同时拥有 display，生产 CSS 顺序可能改变结果。
+<a className={cn(styles.inlineFlexLink, "hidden md:inline-flex")} />
+```
+
+正确做法是让 Module 只拥有颜色/装饰，或让 Tailwind 独占 `display`。
+
+## 6. Marketing 与 Product Surface
+
+### Marketing
+
+Landing、定价和活动页可以使用 Display Typography、宽松 Section Rhythm、非对称 Grid、品牌图像与有限 Expressive Motion。页面级 CSS Module 可以更大胆，但仍遵守对比度、触控、Reduced Motion、内容顺序和 320px Reflow。
+
+### Product
+
+Account、C 端和未来 Admin 优先稳定的信息层级、可预测布局、可调密度、完整 Loading / Empty / Error / Permission 状态、键盘操作与低干扰 Productive Motion。
+
+两者共享 Token 与基础 UI，不强迫使用同一种页面构图。
+
+## 7. 组件契约
+
+业务代码只从 `components/ui` 使用基础 UI。shadcn、Base UI、Radix、React Aria 或其他组件先进入本地边界，再适配 Token、RSC 和状态规范。
 
 每个交互组件至少覆盖：
 
@@ -146,54 +168,81 @@ Marketing 仍必须遵守对比度、触控目标、Reduced Motion、内容顺�
 | 状态 | Rest、Hover、Active、Focus-visible、Disabled |
 | 异步 | Idle、Loading、Success、Error |
 | 输入 | Empty、Filled、Invalid、Read-only |
-| 环境 | Compact、Wide、键盘、触控、Reduced Motion |
-| 主题 | Light；启用 Dark 后必须单独验收 Dark |
+| 环境 | Narrow、Compact、Wide、键盘、触控、Reduced Motion |
+| 主题 | Light；启用 Dark 后单独验收 Dark |
 
-组件公开 Variant，不公开内部 DOM class。业务页面通过 Props 和 `className` 做有限组合，不能依赖组件内部选择器。
+组件公开 Props 和 `className`，不公开内部 DOM class。Variant 只有两三个轴时使用 Typed Class Map；出现 Compound Variant 后再引入 CVA，基础模板不为未来可能性增加依赖。
 
-## 7. CSS 所有权
+## 8. 第三方 UI 接入
 
-- `app/globals.css` 不写页面或组件样式；
-- 真正全局的规则只能进入 `styles/foundations`；
-- 页面艺术方向放在同目录 `page.module.css`；
-- 可复用组件样式与组件共置为 `<name>.module.css`；
-- 能用现有 Token 时不创建新值；新 Token 必须表达重复出现的设计决定；
-- 不使用无作用域的 `.button`、`.card`、`.header` 等泛化全局类；
-- 不为了复用两三行 CSS 提前建立抽象，先让重复模式真实出现。
+```bash
+pnpm dlx shadcn@latest info
+pnpm dlx shadcn@latest add dialog --dry-run
+pnpm dlx shadcn@latest add dialog
+```
 
-## 8. 动效规范
+安装前检查源码、依赖、全局样式、Client Boundary、键盘行为和许可证。完整 Block 先进入隔离目录人工合并，不用 `--overwrite` 覆盖现有路由。
 
-- Productive Motion：Hover、Toggle、Dropdown、表单反馈，使用 `--motion-fast` / `--motion-base`；
-- Expressive Motion：页面关键揭示或品牌时刻，使用 `--motion-slow` / `--motion-expressive`；
-- Entrance、Exit 和 Standard 使用不同语义缓动；
-- 动效必须帮助理解状态、层级或空间关系，不能只为“显得高级”；
-- 所有动效必须在 `prefers-reduced-motion` 下保留等价的静态状态表达。
+引入后的收口步骤：
+
+1. 业务只引用本地 `components/ui`；
+2. Raw Palette 替换为 Semantic Utility；
+3. Viewport Variant 判断是否应改成 Named Container；
+4. 检查 RSC / `use client` 是否保持最小叶子；
+5. 跑 Lint、TypeScript、生产构建和浏览器矩阵。
+
+## 9. 动效规范
+
+- Productive Motion：Hover、Toggle、Dropdown、表单反馈，使用 `duration-fast/base`；
+- Expressive Motion：页面关键揭示或品牌时刻，使用 `duration-slow/expressive`；
+- Entrance、Exit 与 Standard 使用不同语义缓动；
+- 动效必须解释状态、层级或空间关系；
+- `prefers-reduced-motion` 下保留静态状态表达并把时长降到近零。
 
 只有 CSS 无法正确表达退出、布局或手势动画时，才在局部 Client Island 引入 Motion。不要把根 Layout 变为 Client Component。
 
-## 9. 视觉验收门禁
+## 10. 视觉质量门禁
 
-新页面交付前至少检查：
+自动门禁：
 
-1. 320、390、768、1024、1440、1920 六个代表宽度，以及 568×320 横屏；
-2. 无横向溢出、标题孤字、控件裁切和不可触达内容；
-3. 键盘 Tab 顺序、Focus-visible、Skip Link；
-4. 文本与控件对比度、错误信息不只依赖颜色；
-5. Rest、Hover、Loading、Error、Empty 状态；
-6. 200% 缩放、粗指针、Reduced Motion；
-7. 生产构建中的 CSS 顺序和页面切换。
+```bash
+pnpm lint
+pnpm typecheck
+pnpm build
+pnpm test
+pnpm test:responsive
+```
 
-基础组件达到约 10–15 个或进入多人协作后，再加入 Storybook、浏览器级可访问性检查和视觉回归基线。单个 Landing 阶段不为了工具完整而提前增加整套依赖。
+浏览器矩阵检查 9 个视口、边界上下 1px、横向几何、裁切、44×44 目标、200% 文本放大、Reduced Motion、真实认证态和 Axe。详细矩阵见 [`responsive-design.md`](responsive-design.md)。
 
-## 10. 多前端演进
+像素快照只覆盖稳定、高价值构图，不做“所有页面 × 所有视口”。当前 Landing 是可替换示例，因此只在失败时保留 Screenshot、Video 和 Trace；页面稳定后再为 320、1280×800 等少量关键构图提交基线。
 
-当前先在 CreeperNext 内维护视觉系统。第二个真实前端开始复用并且发布节奏稳定后，再提取：
+人工门禁仍包括：真实 Chrome/Safari Zoom、键盘 Tab 顺序、VoiceOver、软键盘、长翻译、Forced Colors 与真机 Safe Area。
+
+## 11. 多前端演进
+
+当前视觉系统留在 CreeperNext 内。第二个真实前端开始复用且发布节奏稳定后，再提取：
 
 ```text
 packages/
 ├── design-tokens/      # 平台无关 Token 与主题
 ├── ui/                 # 稳定基础组件
-└── visual-testing/     # Story、截图与可访问性配置
+└── visual-testing/     # 浏览器断言、Story 与截图策略
 ```
 
-页面 Pattern、营销艺术方向和具体业务组件默认留在各应用中。不要因为“未来可能复用”过早把所有内容放进共享包。
+页面 Pattern、营销艺术方向和业务组件默认留在各应用。不要因为“未来可能复用”过早建立共享包。
+
+## 12. 反模式清单
+
+- `@apply` 把 Utility 重新藏回 CSS；
+- Tailwind Raw Palette 与 Semantic Token 混用；
+- 同一元素由 Tailwind 和 Module 设置同一属性；
+- 动态拼接无法扫描的 Tailwind 类；
+- 让 shadcn CLI 直接写核心 Token；
+- 在可复用组件用页面 `md/lg` 推断空间；
+- 匿名 Container Query；
+- 全仓 Desktop-first，再逐层用 `max-width` 撤销；
+- `overflow-x: clip` 掩盖布局错误；
+- 为“可能以后用”预装大型动效、表单或组件依赖。
+
+相关依据：[Next.js CSS 指南](https://nextjs.org/docs/app/getting-started/css)、[Tailwind Responsive Design](https://tailwindcss.com/docs/responsive-design)、[GitHub Primer Layout](https://primer.style/product/getting-started/foundations/layout/)。

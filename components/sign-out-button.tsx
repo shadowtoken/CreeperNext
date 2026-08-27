@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "../lib/auth-client";
-import styles from "./sign-out-button.module.css";
+import { Button } from "./ui/button";
 
 export function SignOutButton() {
   const router = useRouter();
@@ -17,8 +17,8 @@ export function SignOutButton() {
   }
 
   return (
-    <button className={styles.root} disabled={pending} onClick={signOut} type="button">
+    <Button disabled={pending} onClick={signOut} size="small" type="button" variant="ghost">
       {pending ? "正在退出…" : "退出登录"}
-    </button>
+    </Button>
   );
 }

@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "../lib/auth-client";
+import { cn } from "../lib/cn";
 import { Button } from "./ui/button";
 import styles from "./auth-form.module.css";
 
@@ -46,7 +47,7 @@ export function RegisterForm({ returnTo }: { returnTo: string }) {
   }
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
+    <form className={cn(styles.form, "@container/form")} onSubmit={handleSubmit}>
       <div className={styles.field}>
         <label htmlFor="register-name">称呼</label>
         <input
@@ -75,7 +76,7 @@ export function RegisterForm({ returnTo }: { returnTo: string }) {
           required
         />
       </div>
-      <div className={styles.fieldGrid}>
+      <div className={cn(styles.fieldGrid, "grid-cols-1 @min-[24rem]/form:grid-cols-2")}>
         <div className={styles.field}>
           <label htmlFor="register-password">密码</label>
           <input

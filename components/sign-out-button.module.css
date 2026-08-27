@@ -1,2 +1,0 @@
-.root { min-height: var(--size-target-min); padding: 0; display: inline-flex; align-items: center; gap: 0.5625rem; border: 0; color: var(--color-text-tertiary); background: transparent; font-size: 0.8125rem; cursor: pointer; }
-.root:disabled { cursor: wait; opacity: 0.62; }

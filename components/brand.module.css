@@ -5,7 +5,7 @@
   display: grid;
   place-items: center;
   border-radius: 0.5rem;
-  color: var(--color-action-accent);
+  color: var(--color-text-on-primary);
   background: var(--color-action-primary);
   font-family: var(--font-geist-mono), monospace;
   font-size: 0.875rem;

@@ -36,7 +36,7 @@ export default function Home() {
       <SiteHeader />
       <main id="main-content" tabIndex={-1}>
         <section className={styles.hero} id="top">
-        <div className={styles.heroCopy}>
+        <div className={cn(styles.heroCopy, "@container/hero-copy")}>
           <div className={styles.eyebrow}><span />Next.js 产品脚手架</div>
           <h1><span>从一个好地基，</span><span>开始下一款产品。</span></h1>
           <p className={styles.heroLead}>
@@ -91,7 +91,7 @@ export default function Home() {
           />
           <ButtonLink className={styles.structureButton} href="/account" variant="secondary">查看受保护页面 <span aria-hidden="true">→</span></ButtonLink>
         </div>
-        <ol className={styles.layerStack} aria-label="脚手架分层结构">
+        <ol className={cn(styles.layerStack, "@container/layers")} aria-label="脚手架分层结构">
           <Layer index="04" title="Your product" detail="Admin、SaaS、Blog…" accent />
           <Layer index="03" title="Pages & Patterns" detail="Landing、Auth、Account" />
           <Layer index="02" title="Design System" detail="Tokens、UI、Motion" />
@@ -99,7 +99,7 @@ export default function Home() {
         </ol>
       </section>
 
-      <section className={styles.authShowcase} aria-labelledby="auth-showcase-title">
+      <section className={cn(styles.authShowcase, "@container/auth-showcase")} aria-labelledby="auth-showcase-title">
         <div className={styles.authShowcaseCopy}>
           <Kicker inverse>AUTHENTICATION INCLUDED</Kicker>
           <h2 id="auth-showcase-title">认证不是一张登录表单。</h2>
@@ -125,7 +125,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className={styles.finalCta}>
+      <section className={cn(styles.finalCta, "@container/final-cta")}>
         <Kicker>READY WHEN YOU ARE</Kicker>
         <h2>地基已经打好。<br />下一层，由产品决定。</h2>
         <div className={styles.ctaActions}>

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { Brand } from "./brand";
 import { Kicker } from "./ui/kicker";
+import { cn } from "../lib/cn";
 import styles from "./auth-shell.module.css";
 
 export function AuthShell({
@@ -25,7 +26,7 @@ export function AuthShell({
       </header>
       <main className={styles.layout} id="main-content" tabIndex={-1}>
         <section className={styles.panel}>
-          <div className={styles.card}>
+          <div className={cn(styles.card, "@container/auth-card")}>
             <Kicker>{eyebrow}</Kicker>
             <h1>{title}</h1>
             <p className={styles.description}>{description}</p>

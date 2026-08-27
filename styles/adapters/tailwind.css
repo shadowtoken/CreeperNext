@@ -1,0 +1,90 @@
+/* Tailwind consumes the design system; it does not own runtime theme values. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--color-action-primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-on-primary: var(--color-text-on-primary);
+  --color-on-accent: var(--color-text-on-accent);
+  --color-inverse-foreground: var(--color-text-inverse);
+  --color-inverse-muted: var(--color-text-inverse-muted);
+  --color-inverse-border: var(--color-border-inverse);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-strong-border: var(--color-border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-canvas: var(--color-bg-canvas);
+  --color-subtle: var(--color-bg-subtle);
+  --color-surface: var(--color-surface-default);
+  --color-raised: var(--color-surface-raised);
+  --color-copy-secondary: var(--color-text-secondary);
+  --color-copy-tertiary: var(--color-text-tertiary);
+
+  --spacing-page-safe: var(--space-page-gutter-inline-safe);
+  --spacing-target: var(--size-target-min);
+  --container-content: var(--size-content-max);
+  --container-wide: var(--size-content-wide);
+  --container-reading: var(--size-content-reading);
+
+  /* A complete, intentional radius scale avoids half-overriding Tailwind defaults. */
+  --radius-xs: 0.375rem;
+  --radius-sm: var(--ref-radius-sm);
+  --radius-md: var(--ref-radius-md);
+  --radius-lg: var(--ref-radius-lg);
+  --radius-xl: var(--ref-radius-xl);
+  --radius-2xl: 2.25rem;
+  --radius-3xl: 3rem;
+  --radius-4xl: 4rem;
+  --radius-full: var(--ref-radius-pill);
+  --radius-control: var(--ds-radius-control);
+  --radius-card: var(--ds-radius-card);
+  --radius-dialog: var(--ds-radius-dialog);
+
+  --shadow-raised: var(--ds-shadow-raised);
+  --shadow-overlay: var(--ds-shadow-overlay);
+  --shadow-focus: var(--ds-shadow-focus);
+  --shadow-button: var(--ds-shadow-button);
+
+  --transition-duration-instant: var(--motion-instant);
+  --transition-duration-fast: var(--motion-fast);
+  --transition-duration-base: var(--motion-base);
+  --transition-duration-slow: var(--motion-slow);
+  --transition-duration-expressive: var(--motion-expressive);
+  --ease-standard: var(--motion-ease-standard);
+  --ease-enter: var(--motion-ease-enter);
+  --ease-exit: var(--motion-ease-exit);
+  --ease-expressive: var(--motion-ease-expressive);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Shared layout primitives remain Tailwind utilities instead of a second l-* DSL. */
+@utility page-container {
+  width: min(
+    var(--size-content-max),
+    calc(100% - (2 * var(--space-page-gutter-inline-safe)))
+  );
+  margin-inline: auto;
+}
+
+@utility page-container-wide {
+  width: min(
+    var(--size-content-wide),
+    calc(100% - (2 * var(--space-page-gutter-inline-safe)))
+  );
+  margin-inline: auto;
+}

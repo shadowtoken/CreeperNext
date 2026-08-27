@@ -1,7 +1,6 @@
 @layer base {
   body {
     min-width: 20rem;
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     color: var(--color-text-primary);
     background:
       radial-gradient(circle at 78% 18%, color-mix(in srgb, var(--color-action-accent) 26%, transparent), transparent 28rem),

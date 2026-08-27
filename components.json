@@ -5,7 +5,7 @@
   "tsx": true,
   "tailwind": {
     "config": "",
-    "css": "styles/tokens/semantic.css",
+    "css": "styles/adapters/shadcn.css",
     "baseColor": "stone",
     "cssVariables": true,
     "prefix": ""

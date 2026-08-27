@@ -47,7 +47,7 @@ export default async function AccountPage() {
             <span className={styles.label}>NEXT LAYER</span>
             <h2>从这里开始添加产品。</h2>
             <p>Account 证明地基可用。接下来安装业务模块，而不修改认证和设计系统边界。</p>
-            <ButtonLink className={styles.returnLink} href="/" variant="secondary">返回 Landing <span aria-hidden="true">→</span></ButtonLink>
+            <ButtonLink className={styles.returnLink} href="/" variant="inverse">返回 Landing <span aria-hidden="true">→</span></ButtonLink>
           </article>
         </div>
       </main>

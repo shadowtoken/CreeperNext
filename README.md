@@ -8,13 +8,13 @@
 - 本地 UI 组件、Tailwind CSS 4 与语义 Design Tokens
 - CSS 动效 Token、Reduced Motion 和键盘可访问性
 - Metadata、Open Graph、robots 与 sitemap
-- Lint、类型检查、生产构建与真实认证闭环测试
+- Lint、类型检查、生产构建、真实认证闭环与 9 视口浏览器门禁
 
 Admin、多租户、计费、图表、编辑器和复杂状态管理不属于基础模板，需要时再按 Feature 加入。
 
 ## 快速启动
 
-需要 Node.js `>=22.13.0` 和 pnpm `10.33.x`。项目通过 `packageManager` 字段锁定 pnpm 版本。
+需要 Node.js `>=22.19.0` 和 pnpm `10.33.x`。Better Auth 的 SQLite 适配依赖较新的 `node:sqlite` API；项目通过 `engines` 和 `packageManager` 明确锁定可验证的运行时基线。
 
 ```bash
 pnpm install
@@ -65,7 +65,7 @@ CreeperNext/
 │   └── sitemap.ts                         # /sitemap.xml
 
 
-├── components/                           # 可复用 React 组件；样式以 CSS Module 共置
+├── components/                           # 可复用 React 组件；Tailwind-first，复杂视觉局部共置
 │   ├── ui/                               # Button、Kicker 等本地基础 UI 出口
 │   ├── login-form.tsx                    # 登录交互 Client Component
 │   ├── register-form.tsx                 # 注册交互 Client Component
@@ -87,13 +87,15 @@ CreeperNext/
 │   ├── index.css                         # 视觉系统唯一入口和确定的导入顺序
 │   ├── tokens/
 │   │   ├── primitives.css                # 原始色阶、间距、圆角、时长和缓动
-│   │   ├── semantic.css                  # 语义 Token、Tailwind 映射、shadcn 写入目标
+│   │   ├── semantic.css                  # 运行时语义 Token、密度、尺寸和 Safe Area
 │   │   └── themes.css                    # Dark / High Contrast 等语义覆盖
+│   ├── adapters/
+│   │   ├── tailwind.css                  # @theme 映射、语义 Utility 和布局入口
+│   │   └── shadcn.css                    # 第三方 Registry 兼容边界与 CLI 写入目标
 │   └── foundations/
-│       ├── reset.css                     # 浏览器基础归一
+│       ├── reset.css                     # Tailwind Preflight 之外的项目级增量
 │       ├── document.css                  # html/body 等文档级规则
-│       ├── accessibility.css             # Focus、Skip Link 和 sr-only
-│       ├── layout.css                    # Container、Stack、Inline、Grid 原语
+│       ├── accessibility.css             # Focus 和 Skip Link；sr-only 使用 Tailwind 内建工具
 │       └── motion.css                    # Productive / Expressive 与 Reduced Motion
 
 
@@ -104,10 +106,15 @@ CreeperNext/
 
 ├── config/site.ts                         # 站点名称、描述、公开 URL 和分享图配置
 ├── public/                                # 不经过打包、按原路径提供的静态资源
-├── tests/app.test.mjs                     # 生产构建上的路由、安全和真实认证闭环测试
+├── tests/
+│   ├── app.test.mjs                      # HTTP、路由、安全和真实认证闭环测试
+│   ├── support/                          # 不依赖本机 .env 的隔离生产构建器
+│   └── browser/                          # 响应矩阵、共享测试会话、能力偏好和 Axe
 
 
 ├── components.json                        # shadcn CLI、别名和 Token 文件入口
+├── playwright.config.ts                   # 生产式 Chromium、独立 DB 和失败产物
+├── .github/workflows/quality.yml          # PR / main 自动质量门禁
 ├── next.config.ts                         # Next.js 配置与安全响应头
 ├── postcss.config.mjs                     # Tailwind/PostCSS 构建配置
 ├── eslint.config.mjs                      # ESLint、React、Hooks 和可访问性规则
@@ -115,7 +122,7 @@ CreeperNext/
 └── package.json                           # pnpm 版本、Node 版本、依赖和工程命令
 ```
 
-`.next/`、`node_modules/`、`*.sqlite`、`*.tsbuildinfo` 和 `.env.local` 都是生成物或本机配置，不属于工程源码，也不会提交到 Git。
+`.next/`、`node_modules/`、`*.sqlite`、`*.tsbuildinfo`、Playwright 报告和 `.env.local` 都是生成物或本机配置，不属于工程源码，也不会提交到 Git。
 
 ### 三个容易混淆的关键边界
 
@@ -161,25 +168,29 @@ app/layout.tsx
        └─ @import styles/index.css
             ├─ @import "tailwindcss"
             ├─ @import styles/tokens/*
+            ├─ @import styles/adapters/*
             └─ @import styles/foundations/*
 ```
 
 | 文件 | 应该负责什么 | 不应该负责什么 |
 | --- | --- | --- |
 | `styles/tokens/primitives.css` | 原始色阶、间距、圆角、时长和缓动 | 让业务直接使用原始颜色；稳定 Scale 的例外见视觉规范 |
-| `styles/tokens/semantic.css` | 用途命名的语义 Token、Tailwind `@theme` 映射和 shadcn CSS 写入目标 | 某个页面的排版和组件结构 |
+| `styles/tokens/semantic.css` | 用途命名的运行时 Token、密度、尺寸和 Safe Area | Tailwind Namespace、Registry 变量、页面排版 |
 | `styles/tokens/themes.css` | 通过覆盖语义角色实现 Dark、High Contrast 等主题 | 重写组件选择器 |
-| `styles/foundations/*` | Reset、文档、无障碍、布局原语和动效政策 | Landing、Auth 等业务页面样式 |
+| `styles/adapters/tailwind.css` | 把 Semantic Token 映射为 Utility；定义 `page-container` | 成为第二套运行时主题来源 |
+| `styles/adapters/shadcn.css` | 隔离第三方兼容变量和 CLI 写入 | 承载核心品牌 Token 或页面样式 |
+| `styles/foundations/*` | Reset、文档、无障碍和动效政策 | Landing、Auth 等业务页面样式 |
 | `app/globals.css` | 只导入 `styles/index.css`，确保全局加载入口唯一 | 放置页面和组件选择器 |
-| `*.module.css` | 页面艺术方向、组件结构、Variant 和交互状态 | 重复定义全站 Token |
+| Tailwind Utility | 常规布局、间距、显示状态、Variant、Named Container Query | 渐变、伪元素和长篇艺术构图 |
+| `*.module.css` | 页面艺术方向、复杂局部视觉和特殊选择器 | 与 Tailwind 同时拥有同一元素的同一属性 |
 
-Landing、认证、Account、Header、Footer 和表单的样式都已经迁移到局部 CSS Modules。完整 Token 分层、Marketing / Product 视觉边界、组件状态矩阵、响应式检查和多前端演进规则见 [`docs/visual-system.md`](docs/visual-system.md)。
+当前是明确的 Tailwind-first 混合架构：Header、Button、基础 Variant 与组件容器响应使用 Tailwind；Landing、Auth Shell 和 Foundation Preview 等表达型构图使用 CSS Modules；主题和密度使用 CSS Variables。完整 CSS 所有权、Cascade、Marketing / Product 边界与第三方接入规则见 [`docs/visual-system.md`](docs/visual-system.md)。
 
 ### 响应式不是按设备写三套页面
 
 当前采用五层模型：Fluid CSS → Intrinsic Layout → Component Container Query → 少量 Page Viewport Query → 输入能力与用户偏好 Query。Grid 和卡片先根据内容自动换列；表单、Header、Footer 和预览组件根据自身容器调整；只有导航层级、全屏高度等真正依赖浏览器窗口的行为才读取 Viewport。
 
-320、390、768、1024、1440、1920 是验收样本，不是 iPhone / iPad / Desktop 的代码分支。阈值在内容开始失效的位置产生，不按设备品牌、User-Agent 或当前市场机型表产生。完整实现规则、H5 底线、图片策略和测试矩阵见 [`docs/responsive-design.md`](docs/responsive-design.md)。
+320、390、568 横屏、768、1024、1280×800/832、1440、1920 是验收样本，不是 iPhone / iPad / Desktop 的代码分支。阈值在内容开始失效的位置产生，不按设备品牌、User-Agent 或当前市场机型表产生。完整实现规则、Safe Area、H5 底线、图片策略和自动测试矩阵见 [`docs/responsive-design.md`](docs/responsive-design.md)。
 
 ## 工程约定与最佳实践判断
 
@@ -191,7 +202,8 @@ Landing、认证、Account、Header、Footer 和表单的样式都已经迁移�
 | 用 `[...all]/route.ts` 承接 Better Auth 接口 | 推荐 | 让认证库集中拥有注册、登录、Session 和 Cookie 协议，应用不重复实现安全敏感细节 |
 | `server/` 与 `lib/auth-client.ts` 分开 | 推荐 | 服务端秘密不会误进 Client Bundle，浏览器端只暴露必要客户端能力 |
 | 业务只依赖本地 `components/ui` | 推荐 | 可以引入 shadcn 或其他源码型组件，又不会把业务永久锁死在第三方 API 上 |
-| Primitive → Semantic → Component 三层 Token | 推荐 | 原始数值、用途和组件状态解耦；主题只覆盖语义角色 |
+| Primitive → Semantic → Adapter → Component | 推荐 | 原始值、运行时主题、工具链兼容与组件状态解耦；第三方不能污染核心 Token |
+| Tailwind-first + CSS Modules 艺术层 | 推荐 | 常规 UI 只有一种 Utility 语言，复杂构图仍保持局部、可读和可替换 |
 | `globals.css` 只作为视觉系统入口 | 推荐 | 真正全局的规则集中在 Foundations，页面和组件使用局部 CSS Modules |
 | Marketing 与 Product 共用地基、分开构图 | 推荐 | 官网可以表达品牌，SaaS 页面保持高效稳定，不强迫两者长得一样 |
 | `app/` 放在项目根目录而不是 `src/app/` | 两者都正确 | Next.js 官方同时支持；当前工程规模小，少一层目录更直观，变大后也不必为“看起来标准”而强制搬迁 |
@@ -227,7 +239,8 @@ Landing、认证、Account、Header、Footer 和表单的样式都已经迁移�
 
 ```bash
 pnpm dlx shadcn@latest info
-pnpm dlx shadcn@latest add button --dry-run
+pnpm dlx shadcn@latest view button
+pnpm dlx shadcn@latest add dialog --dry-run
 pnpm dlx shadcn@latest add dialog
 ```
 
@@ -246,9 +259,13 @@ pnpm lint
 pnpm typecheck
 pnpm build
 pnpm test
+pnpm test:responsive:install   # 首次本机执行一次
+pnpm test:responsive
 pnpm audit --prod
 ```
 
 `pnpm test` 会构建生产版本、创建隔离的临时认证数据库，并验证 Landing、恶意跳转过滤、跨站认证拒绝、真实注册/登录会话、受保护路由、404、安全响应头、robots 与 sitemap。
 
-推荐 CI 顺序为：Lint → TypeScript → 单元/集成测试 → 生产构建 → Playwright 关键路径。复杂表单和业务模块加入后，再补充浏览器级 E2E 与可访问性扫描。
+`pnpm test:responsive` 会再次使用生产构建和隔离数据库，在 9 个 Chromium 视口验证 Landing、Login、Register、404、真实登录态 Account、边界上下 1px、双轴可达性、元素与祖先裁切、控件重叠、44×44 目标、200% 文本放大、Reduced Motion、Light/Dark 对比度、错误态与 Axe。认证 Setup 只建立一次测试会话，不会为了绕过门禁而关闭生产限流。失败时保留 Screenshot、Video 和 Trace。
+
+仓库已经提供 `.github/workflows/quality.yml`：生产依赖审计 → Lint → TypeScript → Node 集成测试 → Chromium 响应式 / 无障碍门禁。自动扫描不能替代真实浏览器 Zoom、键盘、VoiceOver 和真机 Safe Area 人工验收。

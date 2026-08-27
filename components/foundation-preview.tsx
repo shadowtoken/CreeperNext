@@ -3,12 +3,12 @@ import styles from "./foundation-preview.module.css";
 
 export function FoundationPreview() {
   return (
-    <div className={styles.container}>
+    <div className={cn(styles.container, "@container/preview")}>
       <figure className={styles.card}>
         <figcaption className="sr-only">脚手架包含 Landing、认证、设计系统和业务扩展层。</figcaption>
         <div className={styles.topbar}>
           <div className={styles.dots} aria-hidden="true"><span /><span /><span /></div>
-          <span className={styles.path}>foundation / src</span>
+          <span className={styles.path} data-responsive-overflow-ok>foundation / src</span>
           <span className={styles.badge}>READY</span>
         </div>
         <div className={styles.list}>
