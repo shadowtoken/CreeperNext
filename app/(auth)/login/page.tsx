@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthShell } from "../../../components/auth-shell";
-import { LoginForm } from "../../../components/login-form";
+import { LoginForm } from "../../../features/auth";
 import { safeReturnPath } from "../../../lib/auth-paths";
 import { getSession } from "../../../server/auth";
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { SecuritySetupShell } from "../../../../components/security-setup-shell";
-import { TwoFactorEnrollment } from "../../../../components/two-factor-enrollment";
+import { TwoFactorEnrollment } from "../../../../features/auth";
 import { safeReturnPath } from "../../../../lib/auth-paths";
 import { getSession } from "../../../../server/auth";
 

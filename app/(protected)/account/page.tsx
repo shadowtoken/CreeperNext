@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Brand } from "../../../components/brand";
 import { SignOutButton } from "../../../components/sign-out-button";
 import { TwoFactorSettings } from "../../../components/two-factor-settings";
-import { ChangePasswordForm } from "../../../components/change-password-form";
+import { ChangePasswordForm } from "../../../features/auth";
 import { Kicker } from "../../../components/ui/kicker";
 import { siteConfig } from "../../../config/site";
 import { requireTwoFactorSession } from "../../../server/auth";
