@@ -50,6 +50,7 @@ export default defineConfig({
     gracefulShutdown: { signal: "SIGTERM", timeout: 10_000 },
     env: {
       CREEPER_E2E_PORT: String(testPort),
+      AUTH_COOKIE_PREFIX: "creeper_browser_test",
       BETTER_AUTH_SECRET: "creeper-browser-test-secret-at-least-thirty-two-characters",
       BETTER_AUTH_URL: testOrigin,
       SITE_URL: testOrigin,

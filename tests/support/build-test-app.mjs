@@ -8,6 +8,7 @@ const temporaryDirectory = mkdtempSync(path.join(tmpdir(), "creeper-build-"));
 const environment = {
   ...process.env,
   AUTH_DB_PATH: path.join(temporaryDirectory, "auth.sqlite"),
+  AUTH_COOKIE_PREFIX: "creeper_build_test",
   BETTER_AUTH_SECRET: "creeper-build-test-secret-at-least-thirty-two-characters",
   BETTER_AUTH_URL: "http://127.0.0.1:3200",
   SITE_URL: "http://127.0.0.1:3200",
