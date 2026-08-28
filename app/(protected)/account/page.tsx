@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Brand } from "../../../components/brand";
-import { SignOutButton } from "../../../components/sign-out-button";
-import { TwoFactorSettings } from "../../../components/two-factor-settings";
-import { ChangePasswordForm } from "../../../features/auth";
-import { Kicker } from "../../../components/ui/kicker";
-import { siteConfig } from "../../../config/site";
-import { requireTwoFactorSession } from "../../../server/auth";
+import { Brand } from "@/components/shared/brand";
+import { Kicker } from "@/components/ui/kicker";
+import { AUTH_PATHS } from "@/core/auth/paths";
+import { ChangePasswordForm, SignOutButton, TwoFactorSettings } from "@/features/auth";
+import { siteConfig } from "@/config/site";
+import { requireTwoFactorSession } from "@/server/auth";
 import styles from "./account.module.css";
 
 export const metadata: Metadata = {
@@ -16,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AccountPage() {
-  const session = await requireTwoFactorSession("/account");
+  const session = await requireTwoFactorSession(AUTH_PATHS.account);
   const { user } = session;
   const initials = (user.name || user.email).slice(0, 1).toUpperCase();
 
@@ -33,7 +32,7 @@ export default async function AccountPage() {
         <header className={styles.pageHeading}>
           <Kicker>ACCOUNT SETTINGS</Kicker>
           <h1>账户与安全</h1>
-          <p>管理身份资料、登录保护和账户恢复方式。</p>
+          <p>管理身份资料、登录保护和密码。</p>
         </header>
 
         <div className={styles.stack}>
@@ -68,8 +67,16 @@ export default async function AccountPage() {
             </div>
           </section>
 
-      <TwoFactorSettings initiallyEnabled={Boolean(user.twoFactorEnabled)} />
-      <section><h2>修改密码</h2><p>定期更新密码，保护你的登录凭据。</p><ChangePasswordForm /></section>
+          <TwoFactorSettings initiallyEnabled={Boolean(user.twoFactorEnabled)} />
+
+          <section className={styles.settingsCard} aria-labelledby="password-heading">
+            <header className={styles.settingsHeading}>
+              <span className={styles.sectionLabel}>PASSWORD</span>
+              <h2 id="password-heading">修改密码</h2>
+              <p>保存后会退出其他设备上的会话，当前设备保持登录。</p>
+            </header>
+            <ChangePasswordForm />
+          </section>
         </div>
 
         <footer className={styles.pageFooter}>

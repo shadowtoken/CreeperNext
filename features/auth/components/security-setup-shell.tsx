@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Brand } from "./brand";
+import { Brand } from "@/components/shared/brand";
 import { SignOutButton } from "./sign-out-button";
-import { siteConfig } from "../config/site";
+import { siteConfig } from "@/config/site";
 import styles from "./security-setup-shell.module.css";
 
 export function SecuritySetupShell({ children }: { children: ReactNode }) {

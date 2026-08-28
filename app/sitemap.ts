@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getSiteUrl } from "../config/site";
+import { getSiteUrl } from "@/config/env";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

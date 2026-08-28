@@ -11,6 +11,8 @@
     "build": "next build",
     "start": "next start",
     "auth:migrate": "auth migrate --config server/auth-config.ts --yes",
+    "check:architecture": "node scripts/check-architecture.mjs",
+    "check:secrets": "node scripts/check-secrets.mjs",
     "test": "node tests/support/build-test-app.mjs && node --test tests/app.test.mjs",
     "test:responsive": "playwright test",
     "test:responsive:list": "playwright test --list",

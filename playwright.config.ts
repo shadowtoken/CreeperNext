@@ -52,7 +52,7 @@ export default defineConfig({
       CREEPER_E2E_PORT: String(testPort),
       BETTER_AUTH_SECRET: "creeper-browser-test-secret-at-least-thirty-two-characters",
       BETTER_AUTH_URL: testOrigin,
-      NEXT_PUBLIC_SITE_URL: testOrigin,
+      SITE_URL: testOrigin,
     },
   },
 });

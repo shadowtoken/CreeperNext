@@ -1,4 +1,5 @@
 import { DatabaseSync } from "node:sqlite";
+import path from "node:path";
 import { betterAuth } from "better-auth";
 import {
   APIError,
@@ -8,15 +9,29 @@ import {
 import { nextCookies } from "better-auth/next-js";
 import { twoFactor } from "better-auth/plugins";
 import { siteConfig } from "../config/site";
+import {
+  ACCOUNT_LOCKOUT_ATTEMPTS,
+  ACCOUNT_LOCKOUT_SECONDS,
+  AUTH_CHALLENGE_TTL_SECONDS,
+  AUTHENTICATOR_CODE_LENGTH,
+  AUTHENTICATOR_CODE_PERIOD_SECONDS,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+} from "@/core/auth/policy";
+
+// This file is also loaded by Better Auth's migration CLI, which rejects the
+// `server-only` marker. Application code reaches it through server/auth.ts or
+// the Route Handler; ESLint prevents features and UI from importing server/.
 
 const MFA_VERIFICATION_PATHS = new Set([
   "/two-factor/verify-totp",
-  "/two-factor/verify-backup-code",
 ]);
 
 const HARD_DISABLED_PATHS = new Set([
   "/two-factor/disable",
+  "/two-factor/generate-backup-codes",
   "/two-factor/get-totp-uri",
+  "/two-factor/verify-backup-code",
 ]);
 
 // Public entry points and the short-lived second-factor challenge must remain
@@ -36,7 +51,6 @@ const UNASSURED_ALLOWED_PATHS = new Set([
   "/sign-out",
   "/sign-up/email",
   "/two-factor/send-otp",
-  "/two-factor/verify-backup-code",
   "/two-factor/verify-otp",
   "/two-factor/verify-totp",
   "/verify-email",
@@ -46,9 +60,17 @@ const globalForAuth = globalThis as unknown as {
   creeperNextAuthDatabase?: DatabaseSync;
 };
 
+const databasePath = process.env.AUTH_DB_PATH?.trim();
+if (!databasePath && process.env.NODE_ENV === "production") {
+  throw new Error("AUTH_DB_PATH is required in production.");
+}
+if (databasePath && process.env.NODE_ENV === "production" && !path.isAbsolute(databasePath)) {
+  throw new Error("AUTH_DB_PATH must be an absolute path in production.");
+}
+
 const database =
   globalForAuth.creeperNextAuthDatabase ??
-  new DatabaseSync(process.env.AUTH_DB_PATH ?? "creeper-next-auth.sqlite");
+  new DatabaseSync(databasePath || "creeper-next-auth.sqlite");
 
 database.exec("PRAGMA busy_timeout = 5000");
 database.exec("PRAGMA foreign_keys = ON");
@@ -71,8 +93,8 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     autoSignIn: false,
-    minPasswordLength: 8,
-    maxPasswordLength: 128,
+    minPasswordLength: PASSWORD_MIN_LENGTH,
+    maxPasswordLength: PASSWORD_MAX_LENGTH,
   },
   session: {
     additionalFields: {
@@ -134,7 +156,7 @@ export const auth = betterAuth({
 
       if (context.path === "/two-factor/enable") {
         // Re-read the stateful session from SQLite. A cached cookie must never
-        // authorize recovery-code or identity management after revocation.
+        // authorize identity management after revocation.
         const session = await getAuthoritativeSessionFromCtx(context);
 
         if (!session?.session) {
@@ -176,23 +198,24 @@ export const auth = betterAuth({
       issuer: siteConfig.name,
       skipVerificationOnEnable: false,
       allowPasswordless: false,
-      twoFactorCookieMaxAge: 10 * 60,
+      twoFactorCookieMaxAge: AUTH_CHALLENGE_TTL_SECONDS,
       // The starter's default policy requires a fresh second factor after
       // every password sign-in. The request hook also rejects trustDevice.
       trustDeviceMaxAge: 0,
       totpOptions: {
-        digits: 6,
-        period: 30,
+        digits: AUTHENTICATOR_CODE_LENGTH,
+        period: AUTHENTICATOR_CODE_PERIOD_SECONDS,
       },
       backupCodeOptions: {
-        amount: 10,
-        length: 10,
+        // Better Auth's TOTP model includes this column, but this product
+        // intentionally exposes no recovery-code capability.
+        customBackupCodesGenerate: () => [],
         storeBackupCodes: "encrypted",
       },
       accountLockout: {
         enabled: true,
-        maxFailedAttempts: 5,
-        durationSeconds: 15 * 60,
+        maxFailedAttempts: ACCOUNT_LOCKOUT_ATTEMPTS,
+        durationSeconds: ACCOUNT_LOCKOUT_SECONDS,
       },
     }),
     // Keep this last so cookies written by Better Auth endpoints reach Next.js.
@@ -215,11 +238,20 @@ function requiredUrl(name: "BETTER_AUTH_URL"): string {
   const value = process.env[name]?.trim();
   try {
     const url = new URL(value ?? "");
-    if (url.protocol === "http:" || url.protocol === "https:") return url.toString();
+    if (
+      (url.protocol === "http:" || url.protocol === "https:")
+      && !url.username
+      && !url.password
+      && url.pathname === "/"
+      && !url.search
+      && !url.hash
+    ) {
+      return url.origin;
+    }
   } catch {
     // Fall through to one actionable configuration error.
   }
-  throw new Error(`${name} must be a valid http(s) URL.`);
+  throw new Error(`${name} must be an http(s) origin without credentials, path, query, or hash.`);
 }
 
 function additionalTrustedOrigins(fallback: string): string[] {
@@ -256,9 +288,11 @@ function additionalTrustedOrigins(fallback: string): string[] {
 
 function allowedHosts(fallback: string): string[] {
   const configured = process.env.BETTER_AUTH_ALLOWED_HOSTS?.trim();
-  const entries = (configured || "localhost:*,127.0.0.1:*,creeper.localhost:*")
+  const developmentDefaults = "localhost:*,127.0.0.1:*,creeper.localhost:*";
+  const entries = (configured || (process.env.NODE_ENV === "production" ? "" : developmentDefaults))
     .split(",")
-    .map((entry) => entry.trim());
+    .map((entry) => entry.trim())
+    .filter(Boolean);
   entries.push(new URL(fallback).host);
 
   return [...new Set(entries.map(normalizeAllowedHost))];
@@ -308,7 +342,11 @@ function normalizeAllowedHost(candidate: string): string {
 }
 
 function cookiePrefix(): string {
-  const value = process.env.AUTH_COOKIE_PREFIX?.trim() || "creeper_next";
+  const configured = process.env.AUTH_COOKIE_PREFIX?.trim();
+  if (!configured && process.env.NODE_ENV === "production") {
+    throw new Error("AUTH_COOKIE_PREFIX is required in production.");
+  }
+  const value = configured || "creeper_next";
   if (!/^[A-Za-z0-9_-]{1,32}$/.test(value)) {
     throw new Error(
       "AUTH_COOKIE_PREFIX must be 1-32 characters using only letters, numbers, underscores, or hyphens.",

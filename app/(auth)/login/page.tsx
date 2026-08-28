@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AuthShell } from "../../../components/auth-shell";
-import { LoginForm } from "../../../features/auth";
-import { safeReturnPath } from "../../../lib/auth-paths";
-import { getSession } from "../../../server/auth";
+import { AuthShell, LoginForm } from "@/features/auth";
+import { AUTH_PATHS, safeReturnPath } from "@/core/auth/paths";
+import { siteConfig } from "@/config/site";
+import { getSession } from "@/server/auth";
 
 export const metadata: Metadata = {
   title: "登录",
-  description: "登录 CreeperNext，继续你的工作。",
+  description: `登录 ${siteConfig.name}，继续你的工作。`,
 };
 
 export default async function LoginPage({
@@ -21,7 +21,7 @@ export default async function LoginPage({
   const session = await getSession();
   if (session) {
     if (!session.user.twoFactorEnabled) {
-      redirect(`/two-factor/setup?returnTo=${encodeURIComponent(returnTo)}`);
+      redirect(`${AUTH_PATHS.twoFactorSetup}?returnTo=${encodeURIComponent(returnTo)}`);
     }
     if (session.session.mfaVerifiedAt) redirect(returnTo);
   }
@@ -45,7 +45,7 @@ export default async function LoginPage({
             ? "当前会话没有通过双因素验证，请重新输入密码继续。"
             : "使用邮箱和密码登录；随后使用身份验证器确认。"
       }
-      footer={<>还没有账户？<Link href="/register">免费创建</Link></>}
+      footer={<>还没有账户？<Link href={AUTH_PATHS.register}>免费创建</Link></>}
     >
       <LoginForm registered={params.registered === "1"} returnTo={returnTo} />
     </AuthShell>

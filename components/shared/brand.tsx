@@ -1,4 +1,4 @@
-import { siteConfig } from "../config/site";
+import { siteConfig } from "@/config/site";
 import styles from "./brand.module.css";
 
 export function Brand({ compact = false }: { compact?: boolean }) {

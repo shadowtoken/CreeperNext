@@ -1,3 +1,3 @@
 # Features
 
-按业务域组织前端能力。每个域统一包含 `components/`、`lib/` 与 `index.ts`，页面只通过公开入口引用。
+按业务域组织前端能力。每个域使用 `index.ts` 暴露公开能力，`components/`、`lib/` 等内部目录按真实需求创建，不制造空层。

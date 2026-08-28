@@ -1,3 +1,4 @@
+/* Marketing footer composition. */
 @layer components {
   .footer {
     width: min(var(--size-content-max), calc(100% - (2 * var(--space-page-gutter-inline-safe))));

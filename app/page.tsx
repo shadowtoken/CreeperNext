@@ -1,10 +1,9 @@
-import { FoundationPreview } from "../components/foundation-preview";
-import { SiteFooter } from "../components/site-footer";
-import { SiteHeader } from "../components/site-header";
-import { ButtonLink } from "../components/ui/button-link";
-import { Kicker } from "../components/ui/kicker";
-import { siteConfig } from "../config/site";
-import { cn } from "../lib/cn";
+import { FoundationPreview, SiteFooter, SiteHeader } from "@/features/marketing";
+import { ButtonLink } from "@/components/ui/button-link";
+import { Kicker } from "@/components/ui/kicker";
+import { siteConfig } from "@/config/site";
+import { AUTH_PATHS } from "@/core/auth/paths";
+import { cn } from "@/lib/cn";
 import Link from "next/link";
 import styles from "./page.module.css";
 
@@ -45,7 +44,7 @@ export default function Home() {
             让团队把时间用在真正独特的产品上。
           </p>
           <div className={styles.heroActions}>
-            <ButtonLink className={styles.heroPrimary} href="/register">免费开始 <span aria-hidden="true">→</span></ButtonLink>
+            <ButtonLink className={styles.heroPrimary} href={AUTH_PATHS.register}>免费开始 <span aria-hidden="true">→</span></ButtonLink>
             <a className={styles.textLink} href="#structure">查看结构 <span aria-hidden="true">↘</span></a>
           </div>
           <div className={styles.heroNote}>
@@ -90,7 +89,7 @@ export default function Home() {
             title="四层结构，顺序生长。"
             copy="每一层都有单一职责。新增业务只向上生长，不需要拆掉已经稳定的部分。"
           />
-          <ButtonLink className={styles.structureButton} href="/account" variant="secondary">查看受保护页面 <span aria-hidden="true">→</span></ButtonLink>
+          <ButtonLink className={styles.structureButton} href={AUTH_PATHS.account} variant="secondary">查看受保护页面 <span aria-hidden="true">→</span></ButtonLink>
         </div>
         <ol className={cn(styles.layerStack, "@container/layers")} aria-label="脚手架分层结构">
           <Layer index="04" title="Your product" detail="Admin、SaaS、Blog…" accent />
@@ -121,7 +120,7 @@ export default function Home() {
             <h3>继续构建你的产品</h3>
             <p>登录后进入一个最小、真实受保护的 Account 页面。</p>
           </div>
-          <ButtonLink href="/login">登录 {siteConfig.name} <span aria-hidden="true">→</span></ButtonLink>
+          <ButtonLink href={AUTH_PATHS.login}>登录 {siteConfig.name} <span aria-hidden="true">→</span></ButtonLink>
           <small>账户创建后，通过登录在服务端安全建立会话。</small>
         </div>
       </section>
@@ -130,8 +129,8 @@ export default function Home() {
         <Kicker>READY WHEN YOU ARE</Kicker>
         <h2>地基已经打好。<br />下一层，由产品决定。</h2>
         <div className={styles.ctaActions}>
-          <ButtonLink className={styles.ctaPrimary} href="/register">开始搭建 <span aria-hidden="true">→</span></ButtonLink>
-          <Link href="/login">我已有账户</Link>
+          <ButtonLink className={styles.ctaPrimary} href={AUTH_PATHS.register}>开始搭建 <span aria-hidden="true">→</span></ButtonLink>
+          <Link href={AUTH_PATHS.login}>我已有账户</Link>
         </div>
       </section>
       </main>

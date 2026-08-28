@@ -1,3 +1,4 @@
+/* Shared form grammar inside the authentication feature. */
 @layer components {
   .form {
     width: 100%;
@@ -33,7 +34,8 @@
     gap: var(--ref-space-3);
   }
 
-  .field input {
+  .field > input,
+  .passwordControl input {
     width: 100%;
     min-height: 3.25rem;
     padding-inline: var(--ref-space-4);
@@ -53,19 +55,23 @@
       background-color var(--motion-fast) var(--motion-ease-standard);
   }
 
-  .field input::placeholder { color: var(--color-text-secondary); }
+  .field > input::placeholder,
+  .passwordControl input::placeholder { color: var(--color-text-secondary); }
 
-  .field input:hover:not(:focus) {
+  .field > input:hover:not(:focus),
+  .passwordControl input:hover:not(:focus) {
     border-color: color-mix(in srgb, var(--color-text-primary) 55%, var(--color-border-strong));
   }
 
-  .field input:focus-visible {
+  .field > input:focus-visible,
+  .passwordControl input:focus-visible {
     border-color: var(--color-focus-ring);
     background: var(--color-surface-raised);
     box-shadow: var(--ds-shadow-focus);
   }
 
-  .field input[aria-invalid="true"] {
+  .field > input[aria-invalid="true"],
+  .passwordControl input[aria-invalid="true"] {
     border-color: var(--color-status-danger-text);
   }
 
@@ -116,9 +122,12 @@
     stroke-width: 1.75;
   }
 
-  .field input:-webkit-autofill,
-  .field input:-webkit-autofill:hover,
-  .field input:-webkit-autofill:focus {
+  .field > input:-webkit-autofill,
+  .field > input:-webkit-autofill:hover,
+  .field > input:-webkit-autofill:focus,
+  .passwordControl input:-webkit-autofill,
+  .passwordControl input:-webkit-autofill:hover,
+  .passwordControl input:-webkit-autofill:focus {
     -webkit-text-fill-color: var(--color-text-primary);
     box-shadow: 0 0 0 1000px var(--color-surface-default) inset;
     transition: background-color 9999s ease-out;

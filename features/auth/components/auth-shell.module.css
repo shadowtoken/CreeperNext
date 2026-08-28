@@ -1,3 +1,4 @@
+/* Authentication shell composition. */
 @layer components {
   .page {
     --auth-gutter: clamp(1.25rem, 6.15vw, 1.5rem);

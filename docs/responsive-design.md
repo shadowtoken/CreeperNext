@@ -183,7 +183,7 @@ Vercel Commerce 的 Navbar、Grid、Gallery 和 Footer 是很好的实战参考�
 - 可见文本及其裁切祖先没有被非预期 `overflow` 截断；
 - 所有交互目标达到项目 44×44 标准；
 - 登录态 Account 使用一次性 Setup 建立的真实 Cookie/Session，生产限流保持开启；
-- 强制 MFA Setup 在 390×844 与 1280×800 完整走过确认密码、QR、恢复码三态，并检查几何、44px 目标与 Axe；
+- 强制 MFA Setup 在 390×844 与 1280×800 完整走过确认密码、QR 与动态码验证，并检查几何、44px 目标与 Axe；
 - 所有核心页面的 200% 文本放大、全页 Reduced Motion、错误态与 Light/Dark Axe WCAG A/AA 扫描。
 
 320 CSS px 是 Reflow 自动门禁；`deviceScaleFactor: 2` 只改变 DPR，不等于浏览器 Zoom。Chrome/Safari 的真实 200%/400% Zoom 仍属于发布前人工检查。自动 Axe 也不能替代键盘、屏幕阅读器和真实设备验收。

@@ -1,3 +1,4 @@
+/* Shared brand mark; product features must not override these internals. */
 @layer components {
   .lockup {
     display: inline-flex;

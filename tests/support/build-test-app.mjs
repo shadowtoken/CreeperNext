@@ -10,7 +10,7 @@ const environment = {
   AUTH_DB_PATH: path.join(temporaryDirectory, "auth.sqlite"),
   BETTER_AUTH_SECRET: "creeper-build-test-secret-at-least-thirty-two-characters",
   BETTER_AUTH_URL: "http://127.0.0.1:3200",
-  NEXT_PUBLIC_SITE_URL: "http://127.0.0.1:3200",
+  SITE_URL: "http://127.0.0.1:3200",
 };
 const authCli = path.join(cwd, "node_modules/auth/dist/index.mjs");
 const nextCli = path.join(cwd, "node_modules/next/dist/bin/next");

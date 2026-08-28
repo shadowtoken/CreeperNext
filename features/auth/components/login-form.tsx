@@ -3,10 +3,12 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { authClient } from "../lib/auth-client";
-import { cn } from "../lib/cn";
+import { authClient } from "@/services/api/auth/client";
+import { cn } from "@/lib/cn";
 import { AuthPasswordInput } from "./auth-password-input";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
+import { AUTH_PATHS } from "@/core/auth/paths";
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@/core/auth/policy";
 import styles from "./auth-form.module.css";
 
 export function LoginForm({
@@ -38,7 +40,7 @@ export function LoginForm({
       }
 
       if (result.data && "twoFactorRedirect" in result.data && result.data.twoFactorRedirect) {
-        router.replace(`/two-factor?returnTo=${encodeURIComponent(returnTo)}`);
+        router.replace(`${AUTH_PATHS.twoFactor}?returnTo=${encodeURIComponent(returnTo)}`);
         router.refresh();
         return;
       }
@@ -46,7 +48,7 @@ export function LoginForm({
       // A successful password sign-in still passes through the server-owned
       // enrollment gate. Enrolled users are forwarded immediately; new users
       // must bind and verify an authenticator first.
-      router.replace(`/two-factor/setup?returnTo=${encodeURIComponent(returnTo)}`);
+      router.replace(`${AUTH_PATHS.twoFactorSetup}?returnTo=${encodeURIComponent(returnTo)}`);
       router.refresh();
     } catch {
       setError("网络暂时不可用，请稍后重试。");
@@ -86,9 +88,9 @@ export function LoginForm({
           id="login-password"
           name="password"
           autoComplete="current-password"
-          minLength={8}
-          maxLength={128}
-          placeholder="至少 8 位"
+          minLength={PASSWORD_MIN_LENGTH}
+          maxLength={PASSWORD_MAX_LENGTH}
+          placeholder={`至少 ${PASSWORD_MIN_LENGTH} 位`}
           aria-describedby={descriptionIds}
           aria-invalid={error ? true : undefined}
           required

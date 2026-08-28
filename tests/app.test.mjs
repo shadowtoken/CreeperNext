@@ -19,7 +19,7 @@ const environment = {
   BETTER_AUTH_ALLOWED_HOSTS: "localhost:*,127.0.0.1:*",
   BETTER_AUTH_TRUSTED_ORIGINS: `${trustedClientOrigin}/frontend?source=test`,
   AUTH_COOKIE_PREFIX: authCookiePrefix,
-  NEXT_PUBLIC_SITE_URL: origin,
+  SITE_URL: origin,
 };
 
 let server;
@@ -172,7 +172,7 @@ test("rejects cross-origin authentication mutations", async () => {
   assert.equal(response.status, 403);
 });
 
-test("enforces session-level TOTP, recovery replay protection, and mandatory policy", async () => {
+test("enforces session-level TOTP and mandatory policy without recovery codes", async () => {
   const email = `builder-${process.pid}@example.com`;
   const password = "creeper-next-test-password";
 
@@ -208,7 +208,7 @@ test("enforces session-level TOTP, recovery replay protection, and mandatory pol
   const enrollment = await enable.json();
   assert.equal(enrollment.method, "totp");
   assert.match(enrollment.totpURI, /^otpauth:\/\/totp\//);
-  assert.equal(enrollment.backupCodes.length, 10);
+  assert.deepEqual(enrollment.backupCodes, []);
 
   const secret = new URL(enrollment.totpURI).searchParams.get("secret");
   assert.ok(secret);
@@ -256,9 +256,7 @@ test("enforces session-level TOTP, recovery replay protection, and mandatory pol
     { password },
     parallelSession,
   );
-  const staleRecoveryText = await staleRecoveryRotation.text();
-  assert.equal(staleRecoveryRotation.status, 403, staleRecoveryText);
-  assert.equal(JSON.parse(staleRecoveryText).code, "MFA_REQUIRED");
+  assert.equal(staleRecoveryRotation.status, 404, await staleRecoveryRotation.text());
 
   const staleSecretRead = await authMutation(
     "/api/auth/two-factor/get-totp-uri",
@@ -288,10 +286,7 @@ test("enforces session-level TOTP, recovery replay protection, and mandatory pol
     { password },
     enabledSession,
   );
-  const rotateRecoveryText = await rotateRecoveryCodes.text();
-  assert.equal(rotateRecoveryCodes.status, 200, rotateRecoveryText);
-  const rotatedCodes = JSON.parse(rotateRecoveryText).backupCodes;
-  assert.equal(rotatedCodes.length, 10);
+  assert.equal(rotateRecoveryCodes.status, 404, await rotateRecoveryCodes.text());
 
   const signOut = await authMutation("/api/auth/sign-out", {}, enabledSession);
   assert.equal(signOut.status, 200, await signOut.text());
@@ -323,59 +318,21 @@ test("enforces session-level TOTP, recovery replay protection, and mandatory pol
   assert.ok(secondSession.includes(`${authCookiePrefix}.session_token=`));
   assert.ok(!secondSession.includes(`${authCookiePrefix}.trust_device=`));
 
-  const secondSignOut = await authMutation("/api/auth/sign-out", {}, secondSession);
-  assert.equal(secondSignOut.status, 200, await secondSignOut.text());
-
-  const recoveryChallenge = await signInWithRateLimitRetry({ email, password });
-  assert.equal(recoveryChallenge.status, 200);
-  assert.equal((await recoveryChallenge.clone().json()).twoFactorRedirect, true);
-  const recoveryCookie = cookieHeader(recoveryChallenge);
-  const recover = await authMutation(
+  const disabledRecovery = await authMutation(
     "/api/auth/two-factor/verify-backup-code",
-    { code: rotatedCodes[0], disableSession: false },
-    recoveryCookie,
+    { code: "unused-code", disableSession: false },
+    secondSession,
   );
-  assert.equal(recover.status, 200, await recover.text());
-  const recoveredSession = cookieHeader(recover);
-  assert.ok(recoveredSession.includes("session_token"));
-
-  const recoveredSessionResponse = await fetch(`${origin}/api/auth/get-session`, {
-    headers: { cookie: recoveredSession },
-  });
-  assert.equal(recoveredSessionResponse.status, 200);
-  assert.ok((await recoveredSessionResponse.json()).session.mfaVerifiedAt);
-  const recoveredAccount = await fetch(`${origin}/account`, {
-    headers: { cookie: recoveredSession },
-  });
-  assert.equal(recoveredAccount.status, 200);
-
-  const recoveredSignOut = await authMutation("/api/auth/sign-out", {}, recoveredSession);
-  assert.equal(recoveredSignOut.status, 200, await recoveredSignOut.text());
-  const replayChallenge = await signInWithRateLimitRetry({ email, password });
-  assert.equal(replayChallenge.status, 200);
-  const replayCookie = cookieHeader(replayChallenge);
-  const replayedCode = await authMutation(
-    "/api/auth/two-factor/verify-backup-code",
-    { code: rotatedCodes[0], disableSession: false },
-    replayCookie,
-  );
-  assert.ok([400, 401].includes(replayedCode.status), await replayedCode.text());
-  const secondRecovery = await authMutation(
-    "/api/auth/two-factor/verify-backup-code",
-    { code: rotatedCodes[1], disableSession: false },
-    replayCookie,
-  );
-  assert.equal(secondRecovery.status, 200, await secondRecovery.text());
-  const secondRecoveredSession = cookieHeader(secondRecovery);
+  assert.equal(disabledRecovery.status, 404, await disabledRecovery.text());
 
   const disable = await authMutation(
     "/api/auth/two-factor/disable",
     { password },
-    secondRecoveredSession,
+    secondSession,
   );
   assert.equal(disable.status, 404, await disable.text());
 
-  const finalSignOut = await authMutation("/api/auth/sign-out", {}, secondRecoveredSession);
+  const finalSignOut = await authMutation("/api/auth/sign-out", {}, secondSession);
   assert.equal(finalSignOut.status, 200, await finalSignOut.text());
   const mandatoryChallenge = await signInWithRateLimitRetry({ email, password });
   assert.equal(mandatoryChallenge.status, 200);
@@ -387,6 +344,7 @@ test("renders the branded not-found boundary and security headers", async () => 
   assert.equal(response.status, 404);
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
   assert.equal(response.headers.get("x-frame-options"), "DENY");
+  assert.match(response.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/);
   assert.match(await response.text(), /这里还没有盖房子/);
 });
 

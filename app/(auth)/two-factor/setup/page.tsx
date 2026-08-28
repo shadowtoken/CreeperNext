@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { SecuritySetupShell } from "../../../../components/security-setup-shell";
-import { TwoFactorEnrollment } from "../../../../features/auth";
-import { safeReturnPath } from "../../../../lib/auth-paths";
-import { getSession } from "../../../../server/auth";
+import { SecuritySetupShell, TwoFactorEnrollment } from "@/features/auth";
+import { AUTH_PATHS, safeReturnPath } from "@/core/auth/paths";
+import { getSession } from "@/server/auth";
 
 export const metadata: Metadata = {
   title: "保护账户",
@@ -20,13 +19,13 @@ export default async function TwoFactorSetupPage({
   const session = await getSession();
 
   if (!session) {
-    redirect(`/login?returnTo=${encodeURIComponent(returnTo)}`);
+    redirect(`${AUTH_PATHS.login}?returnTo=${encodeURIComponent(returnTo)}`);
   }
   if (session.user.twoFactorEnabled) {
     redirect(
       session.session.mfaVerifiedAt
         ? returnTo
-        : `/login?reauth=1&returnTo=${encodeURIComponent(returnTo)}`,
+        : `${AUTH_PATHS.login}?reauth=1&returnTo=${encodeURIComponent(returnTo)}`,
     );
   }
 

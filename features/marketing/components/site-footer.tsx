@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Brand } from "./brand";
-import { cn } from "../lib/cn";
-import { siteConfig } from "../config/site";
+import { Brand } from "@/components/shared/brand";
+import { AUTH_PATHS } from "@/core/auth/paths";
+import { cn } from "@/lib/cn";
+import { siteConfig } from "@/config/site";
 import styles from "./site-footer.module.css";
 
 export function SiteFooter() {
@@ -13,12 +14,12 @@ export function SiteFooter() {
         <nav className={cn(styles.links, "justify-start @min-[52rem]/footer:justify-end")} aria-label="页脚导航">
           <Link href="/#principles">原则</Link>
           <Link href="/#structure">结构</Link>
-          <Link href="/login">登录</Link>
-          <Link href="/account">Account</Link>
+          <Link href={AUTH_PATHS.login}>登录</Link>
+          <Link href={AUTH_PATHS.account}>Account</Link>
         </nav>
       </div>
       <div className={styles.meta}>
-        <span>{siteConfig.name.toUpperCase()} / 2026</span>
+        <span>{siteConfig.name.toUpperCase()} / {new Date().getFullYear()}</span>
         <span>BUILT FOR THE LONG RUN</span>
       </div>
     </footer>

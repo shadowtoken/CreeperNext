@@ -40,6 +40,50 @@ const eslintConfig = defineConfig([
       },
     },
   },
+  {
+    files: ["core/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [{
+          group: ["next", "next/**", "react", "react/**", "@/app/**", "@/components/**", "@/features/**", "@/server/**", "@/services/**"],
+          message: "core must remain framework-neutral and dependency-free.",
+        }],
+      }],
+    },
+  },
+  {
+    files: ["components/ui/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [{
+          group: ["@/app/**", "@/features/**", "@/server/**", "@/services/**"],
+          message: "UI primitives cannot depend on application or business layers.",
+        }],
+      }],
+    },
+  },
+  {
+    files: ["features/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [{
+          group: ["@/app/**"],
+          message: "Features must not depend on the routing layer.",
+        }],
+      }],
+    },
+  },
+  {
+    files: ["services/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [{
+          group: ["@/app/**", "@/components/**", "@/features/**", "@/server/**"],
+          message: "Transport adapters must remain independent from UI and routing layers.",
+        }],
+      }],
+    },
+  },
 ]);
 
 export default eslintConfig;

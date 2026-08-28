@@ -1,4 +1,4 @@
-import { cn } from "../lib/cn";
+import { cn } from "@/lib/cn";
 import styles from "./foundation-preview.module.css";
 
 export function FoundationPreview() {

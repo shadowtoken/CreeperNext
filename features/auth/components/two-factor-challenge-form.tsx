@@ -3,8 +3,10 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { authClient } from "../lib/auth-client";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
+import { authClient } from "@/services/api/auth/client";
+import { AUTHENTICATOR_CODE_LENGTH, isAuthenticatorCode } from "@/core/auth/policy";
+import { cn } from "@/lib/cn";
 import styles from "./auth-form.module.css";
 
 export function TwoFactorChallengeForm({ returnTo }: { returnTo: string }) {
@@ -18,8 +20,8 @@ export function TwoFactorChallengeForm({ returnTo }: { returnTo: string }) {
 
     const form = new FormData(event.currentTarget);
     const code = String(form.get("code") ?? "").replaceAll(" ", "").trim();
-    if (!/^\d{6}$/.test(code)) {
-      setError("请输入身份验证器显示的 6 位数字。");
+    if (!isAuthenticatorCode(code)) {
+      setError(`请输入身份验证器显示的 ${AUTHENTICATOR_CODE_LENGTH} 位数字。`);
       return;
     }
 
@@ -45,7 +47,7 @@ export function TwoFactorChallengeForm({ returnTo }: { returnTo: string }) {
     <form className={styles.form} onSubmit={handleSubmit}>
       <div className={styles.field}>
         <label htmlFor="two-factor-code">
-          身份验证器代码
+          身份验证器 {AUTHENTICATOR_CODE_LENGTH} 位代码
         </label>
         <input
           className={styles.otpInput}
@@ -54,9 +56,9 @@ export function TwoFactorChallengeForm({ returnTo }: { returnTo: string }) {
           type="text"
           autoComplete="one-time-code"
           inputMode="numeric"
-          pattern="[0-9]{6}"
-          minLength={6}
-          maxLength={6}
+          pattern={`[0-9]{${AUTHENTICATOR_CODE_LENGTH}}`}
+          minLength={AUTHENTICATOR_CODE_LENGTH}
+          maxLength={AUTHENTICATOR_CODE_LENGTH}
           placeholder="000000"
           aria-describedby={error ? "two-factor-error" : undefined}
           aria-invalid={error ? true : undefined}
@@ -66,7 +68,7 @@ export function TwoFactorChallengeForm({ returnTo }: { returnTo: string }) {
 
       {error && <p className={styles.error} id="two-factor-error" role="alert">{error}</p>}
 
-      <Button className={styles.submit} disabled={pending} type="submit">
+      <Button className={cn(styles.submit, "min-h-[3.25rem] rounded-[0.8125rem]")} disabled={pending} type="submit">
         {pending ? "正在验证…" : "验证并登录"}
       </Button>
 

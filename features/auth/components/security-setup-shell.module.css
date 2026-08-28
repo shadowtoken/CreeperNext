@@ -1,3 +1,4 @@
+/* Dedicated surface for mandatory authenticator enrollment. */
 @layer components {
   .page {
     --setup-gutter: clamp(1.25rem, 6.15vw, 2rem);

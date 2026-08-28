@@ -3,10 +3,12 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { authClient } from "../lib/auth-client";
-import { cn } from "../lib/cn";
+import { authClient } from "@/services/api/auth/client";
+import { cn } from "@/lib/cn";
 import { AuthPasswordInput } from "./auth-password-input";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
+import { AUTH_PATHS } from "@/core/auth/paths";
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@/core/auth/policy";
 import styles from "./auth-form.module.css";
 
 export function RegisterForm({ returnTo }: { returnTo: string }) {
@@ -39,7 +41,7 @@ export function RegisterForm({ returnTo }: { returnTo: string }) {
         return;
       }
 
-      router.replace(`/login?registered=1&returnTo=${encodeURIComponent(returnTo)}`);
+      router.replace(`${AUTH_PATHS.login}?registered=1&returnTo=${encodeURIComponent(returnTo)}`);
       router.refresh();
     } catch {
       setError("网络暂时不可用，请稍后重试。");
@@ -81,15 +83,15 @@ export function RegisterForm({ returnTo }: { returnTo: string }) {
         <div className={styles.field}>
           <div className={styles.labelRow}>
             <label htmlFor="register-password">密码</label>
-            <span className={styles.hint} id="register-password-hint">至少 8 位字符</span>
+            <span className={styles.hint} id="register-password-hint">至少 {PASSWORD_MIN_LENGTH} 位字符</span>
           </div>
           <AuthPasswordInput
             id="register-password"
             name="password"
             autoComplete="new-password"
-            minLength={8}
-            maxLength={128}
-            placeholder="至少 8 位"
+            minLength={PASSWORD_MIN_LENGTH}
+            maxLength={PASSWORD_MAX_LENGTH}
+            placeholder={`至少 ${PASSWORD_MIN_LENGTH} 位`}
             aria-describedby={error ? "register-password-hint register-error" : "register-password-hint"}
             aria-invalid={error ? true : undefined}
             required
@@ -101,8 +103,8 @@ export function RegisterForm({ returnTo }: { returnTo: string }) {
             id="register-confirmation"
             name="confirmation"
             autoComplete="new-password"
-            minLength={8}
-            maxLength={128}
+            minLength={PASSWORD_MIN_LENGTH}
+            maxLength={PASSWORD_MAX_LENGTH}
             placeholder="再次输入"
             aria-describedby={error ? "register-error" : undefined}
             aria-invalid={error ? true : undefined}

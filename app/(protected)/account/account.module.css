@@ -60,7 +60,8 @@
     gap: 1rem;
   }
 
-  .profileCard {
+  .profileCard,
+  .settingsCard {
     min-width: 0;
     padding: clamp(1.25rem, 4vw, 1.75rem);
     display: grid;
@@ -70,6 +71,26 @@
     background: color-mix(in srgb, var(--color-surface-raised) 92%, transparent);
     box-shadow: 0 1px 0 color-mix(in srgb, var(--color-surface-raised) 95%, transparent) inset;
     container: profile-card / inline-size;
+  }
+
+  .settingsHeading {
+    min-width: 0;
+  }
+
+  .settingsHeading h2 {
+    margin: 0.4375rem 0 0;
+    font-size: 1.25rem;
+    font-weight: 650;
+    line-height: 1.3;
+    letter-spacing: -0.015em;
+  }
+
+  .settingsHeading p {
+    max-width: 35rem;
+    margin: 0.4375rem 0 0;
+    color: var(--color-text-secondary);
+    font-size: 0.8125rem;
+    line-height: 1.6;
   }
 
   .sectionHeading {

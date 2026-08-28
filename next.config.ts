@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: developmentOrigins(),
   poweredByHeader: false,
   async headers() {
+    const productionHeaders = process.env.NODE_ENV === "production"
+      ? [{ key: "Content-Security-Policy", value: contentSecurityPolicy() }]
+      : [];
     return [
       {
         source: "/(.*)",
@@ -15,6 +18,7 @@ const nextConfig: NextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
           },
+          ...productionHeaders,
         ],
       },
     ];
@@ -28,6 +32,21 @@ function developmentOrigins(): string[] {
     : ["127.0.0.1", "creeper.localhost"];
 
   return [...new Set(entries.map(normalizeDevelopmentOrigin))];
+}
+
+function contentSecurityPolicy(): string {
+  return [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "connect-src 'self'",
+    "font-src 'self' data:",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "img-src 'self' data: blob:",
+    "object-src 'none'",
+    "script-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline'",
+  ].join("; ");
 }
 
 function normalizeDevelopmentOrigin(candidate: string): string {

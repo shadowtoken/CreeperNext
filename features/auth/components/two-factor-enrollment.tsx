@@ -4,9 +4,15 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "react-qr-code";
-import { authClient } from "../lib/auth-client";
+import { authClient } from "@/services/api/auth/client";
 import { AuthPasswordInput } from "./auth-password-input";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
+import {
+  AUTHENTICATOR_CODE_LENGTH,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  isAuthenticatorCode,
+} from "@/core/auth/policy";
 import styles from "./two-factor-enrollment.module.css";
 
 type Stage = "password" | "scan";
@@ -63,8 +69,8 @@ export function TwoFactorEnrollment({
     resetMessages();
     const form = new FormData(event.currentTarget);
     const code = String(form.get("code") ?? "").replaceAll(" ", "").trim();
-    if (!/^\d{6}$/.test(code)) {
-      setError("请输入身份验证器显示的 6 位数字。");
+    if (!isAuthenticatorCode(code)) {
+      setError(`请输入身份验证器显示的 ${AUTHENTICATOR_CODE_LENGTH} 位数字。`);
       return;
     }
 
@@ -135,8 +141,8 @@ export function TwoFactorEnrollment({
                 id="enrollment-password"
                 name="password"
                 autoComplete="current-password"
-                minLength={8}
-                maxLength={128}
+                minLength={PASSWORD_MIN_LENGTH}
+                maxLength={PASSWORD_MAX_LENGTH}
                 aria-describedby={error ? "enrollment-error" : undefined}
                 aria-invalid={error ? true : undefined}
                 required
@@ -181,8 +187,8 @@ export function TwoFactorEnrollment({
 
             <form className={styles.form} onSubmit={completeEnrollment}>
               <div className={styles.field}>
-                <label htmlFor="enrollment-code">输入身份验证器当前的 6 位代码</label>
-                <input className={styles.codeInput} id="enrollment-code" name="code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" minLength={6} maxLength={6} placeholder="000000" aria-describedby={error ? "enrollment-error" : undefined} aria-invalid={error ? true : undefined} required />
+                <label htmlFor="enrollment-code">输入身份验证器当前的 {AUTHENTICATOR_CODE_LENGTH} 位代码</label>
+                <input className={styles.codeInput} id="enrollment-code" name="code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern={`[0-9]{${AUTHENTICATOR_CODE_LENGTH}}`} minLength={AUTHENTICATOR_CODE_LENGTH} maxLength={AUTHENTICATOR_CODE_LENGTH} placeholder="000000" aria-describedby={error ? "enrollment-error" : undefined} aria-invalid={error ? true : undefined} required />
               </div>
               <Button className={styles.primaryAction} disabled={pending} type="submit">{pending ? "正在验证…" : "验证并启用"}</Button>
               <Button onClick={restartEnrollment} type="button" variant="ghost">重新生成二维码</Button>

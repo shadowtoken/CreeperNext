@@ -45,6 +45,14 @@ test("registration is gated by the complete MFA enrollment flow", async ({ page 
   const session = await sessionResponse.json();
   expect(session.user.twoFactorEnabled).toBe(true);
   expect(session.session.mfaVerifiedAt).toBeTruthy();
+
+  const updatedPassword = `${password}-updated`;
+  await page.getByLabel("当前密码", { exact: true }).fill(password);
+  await page.getByLabel("新密码", { exact: true }).fill(updatedPassword);
+  await page.getByLabel("确认新密码", { exact: true }).fill(updatedPassword);
+  await page.getByRole("button", { name: "修改密码" }).click();
+  await expect(page.getByText("密码已修改，其他设备上的会话已经退出。")).toBeVisible();
+
   await expectResponsiveLayout(page);
   await expectTouchTargets(page);
   await expectNoAxeViolations(page);

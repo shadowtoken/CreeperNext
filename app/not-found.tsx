@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Brand } from "../components/brand";
+import { Brand } from "@/components/shared/brand";
 import { ButtonLink } from "../components/ui/button-link";
 import { Kicker } from "../components/ui/kicker";
 import { siteConfig } from "../config/site";

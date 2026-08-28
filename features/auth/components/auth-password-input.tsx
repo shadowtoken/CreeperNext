@@ -8,6 +8,7 @@ type AuthPasswordInputProps = Omit<ComponentPropsWithoutRef<"input">, "type"> & 
   id: string;
 };
 
+/** Password field with an accessible visibility toggle. */
 export function AuthPasswordInput({ id, ...props }: AuthPasswordInputProps) {
   const [visible, setVisible] = useState(false);
 

@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Brand } from "./brand";
-import { Kicker } from "./ui/kicker";
-import { siteConfig } from "../config/site";
-import { cn } from "../lib/cn";
+import { Brand } from "@/components/shared/brand";
+import { Kicker } from "@/components/ui/kicker";
+import { siteConfig } from "@/config/site";
+import { cn } from "@/lib/cn";
 import styles from "./auth-shell.module.css";
 
 export function AuthShell({
