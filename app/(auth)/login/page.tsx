@@ -14,18 +14,37 @@ export const metadata: Metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ registered?: string; returnTo?: string }>;
+  searchParams: Promise<{ reauth?: string; registered?: string; returnTo?: string }>;
 }) {
   const params = await searchParams;
   const returnTo = safeReturnPath(params.returnTo);
   const session = await getSession();
-  if (session) redirect(returnTo);
+  if (session) {
+    if (!session.user.twoFactorEnabled) {
+      redirect(`/two-factor/setup?returnTo=${encodeURIComponent(returnTo)}`);
+    }
+    if (session.session.mfaVerifiedAt) redirect(returnTo);
+  }
+
+  const reauth = params.reauth === "1" || Boolean(session);
 
   return (
     <AuthShell
       eyebrow="CREEPER ACCOUNT"
-      title="欢迎回来"
-      description="使用邮箱和密码登录 CreeperNext，继续你的工作。"
+      title={
+        params.registered === "1"
+          ? "继续安全设置"
+          : reauth
+            ? "重新验证账户"
+            : "欢迎回来"
+      }
+      description={
+        params.registered === "1"
+          ? "账户创建完成。登录后绑定身份验证器，才能进入应用。"
+          : reauth
+            ? "当前会话没有通过双因素验证，请重新输入密码继续。"
+            : "使用邮箱和密码登录；随后使用身份验证器确认。"
+      }
       footer={<>还没有账户？<Link href="/register">免费创建</Link></>}
     >
       <LoginForm registered={params.registered === "1"} returnTo={returnTo} />

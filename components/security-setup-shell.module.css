@@ -1,0 +1,73 @@
+@layer components {
+  .page {
+    --setup-gutter: clamp(1.25rem, 6.15vw, 2rem);
+
+    min-height: 100svh;
+    padding-inline: max(var(--setup-gutter), env(safe-area-inset-left), env(safe-area-inset-right));
+    padding-block-end: max(var(--setup-gutter), env(safe-area-inset-bottom));
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    background:
+      radial-gradient(
+        circle at 50% -10rem,
+        color-mix(in srgb, var(--color-action-accent) 24%, transparent),
+        transparent min(42rem, 92vw)
+      ),
+      var(--color-bg-canvas);
+  }
+
+  .header {
+    width: min(var(--size-content-max), 100%);
+    min-height: var(--size-site-header-safe);
+    margin-inline: auto;
+    padding-block-start: env(safe-area-inset-top);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ref-space-4);
+  }
+
+  .brand {
+    min-height: var(--size-target-min);
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .main {
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    padding-block: clamp(1.5rem, 5svh, 4rem);
+    display: grid;
+    place-items: center;
+  }
+
+  .surface {
+    width: min(48rem, 100%);
+    min-width: 0;
+    padding: clamp(2rem, 5vw, 3.5rem);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: clamp(1.25rem, 3vw, 1.75rem);
+    background: color-mix(in srgb, var(--color-surface-raised) 95%, transparent);
+    box-shadow:
+      0 1px 0 color-mix(in srgb, var(--color-surface-raised) 92%, transparent) inset,
+      var(--ds-shadow-raised);
+    container: security-setup / inline-size;
+  }
+}
+
+@media (width < 40rem) {
+  .surface {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .main { place-items: start center; }
+}
+
+@media (forced-colors: active) {
+  .surface { background: Canvas; }
+}

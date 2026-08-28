@@ -19,3 +19,23 @@ export async function requireSession(returnTo = "/account") {
   }
   return session;
 }
+
+/**
+ * Product routes require more than a valid password session: every account
+ * must finish authenticator enrollment before it can enter the protected app.
+ * Keep this check on the server so a client-side redirect cannot be bypassed.
+ */
+export async function requireTwoFactorSession(returnTo = "/account") {
+  const safeReturnTo = safeReturnPath(returnTo);
+  const session = await requireSession(safeReturnTo);
+
+  if (!session.user.twoFactorEnabled) {
+    redirect(`/two-factor/setup?returnTo=${encodeURIComponent(safeReturnTo)}`);
+  }
+
+  if (!session.session.mfaVerifiedAt) {
+    redirect(`/login?reauth=1&returnTo=${encodeURIComponent(safeReturnTo)}`);
+  }
+
+  return session;
+}

@@ -18,13 +18,22 @@ export default async function RegisterPage({
 }) {
   const returnTo = safeReturnPath((await searchParams).returnTo);
   const session = await getSession();
-  if (session) redirect(returnTo);
+  if (session) {
+    if (!session.user.twoFactorEnabled) {
+      redirect(`/two-factor/setup?returnTo=${encodeURIComponent(returnTo)}`);
+    }
+    redirect(
+      session.session.mfaVerifiedAt
+        ? returnTo
+        : `/login?reauth=1&returnTo=${encodeURIComponent(returnTo)}`,
+    );
+  }
 
   return (
     <AuthShell
       eyebrow="CREATE ACCOUNT"
       title="创建账户"
-      description="只需一分钟，完成设置后即可开始使用 CreeperNext。"
+      description="先创建凭据；首次登录时必须绑定身份验证器，才能进入应用。"
       footer={<>已经有账户？<Link href="/login">直接登录</Link></>}
     >
       <RegisterForm returnTo={returnTo} />

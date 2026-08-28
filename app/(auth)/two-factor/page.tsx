@@ -25,8 +25,8 @@ export default async function TwoFactorPage({
   return (
     <AuthShell
       eyebrow="SECURITY CHECK"
-      title="再确认一次是你。"
-      description="输入身份验证器生成的动态代码。验证请求十分钟后失效，也可以使用一枚恢复码。"
+      title="再确认一次是你"
+      description="打开身份验证器并输入当前 6 位代码；设备不可用时可以改用恢复码。"
       footer={<>验证请求有问题？<Link href={`/login?returnTo=${encodeURIComponent(returnTo)}`}>重新登录</Link></>}
     >
       <TwoFactorChallengeForm returnTo={returnTo} />

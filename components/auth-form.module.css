@@ -157,6 +157,37 @@
     width: 100%;
     margin-block-start: var(--ref-space-1);
   }
+
+  .otpInput {
+    text-align: center;
+    font: 650 1.125rem/1 var(--font-geist-mono), monospace !important;
+    letter-spacing: 0.32em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .modeSwitch {
+    width: fit-content;
+    min-height: var(--size-target-min);
+    margin-inline: auto;
+    padding-inline: var(--ref-space-2);
+    border: 0;
+    border-radius: 0.625rem;
+    color: var(--color-text-link);
+    background: transparent;
+    font-size: 0.8125rem;
+    font-weight: 650;
+    cursor: pointer;
+    transition:
+      color var(--motion-fast) var(--motion-ease-standard),
+      background-color var(--motion-fast) var(--motion-ease-standard);
+  }
+
+  .modeSwitch:hover {
+    color: var(--color-text-primary);
+    background: var(--color-bg-muted);
+  }
+
+  .modeSwitch:disabled { cursor: wait; opacity: 0.6; }
 }
 
 @media (forced-colors: active) {

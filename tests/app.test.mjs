@@ -71,7 +71,7 @@ test("renders the static CreeperNext landing and metadata", async () => {
   assert.doesNotMatch(html, /codex-preview|SkeletonPreview|vinext/i);
 });
 
-test("renders login and registration without accepting an external return URL", async () => {
+test("renders auth entry points without accepting an external return URL", async () => {
   const [login, register, twoFactor] = await Promise.all([
     fetch(`${origin}/login?returnTo=https://evil.example/steal`),
     fetch(`${origin}/register`),
@@ -91,9 +91,15 @@ test("renders login and registration without accepting an external return URL", 
   assert.match(registerHtml, /创建账户/);
   assert.match(twoFactorHtml, /再确认一次是你/);
   assert.match(twoFactorHtml, /\\"returnTo\\":\\"\/account\\"/);
+
+  const setup = await fetch(`${origin}/two-factor/setup?returnTo=https://evil.example/steal`, {
+    redirect: "manual",
+  });
+  assert.ok([302, 303, 307, 308].includes(setup.status));
+  assert.equal(setup.headers.get("location"), "/login?returnTo=%2Faccount");
 });
 
-test("protects Account and completes the real registration and login flow", async () => {
+test("protects Account and gates a new password session behind MFA enrollment", async () => {
   const anonymous = await fetch(`${origin}/account`, { redirect: "manual" });
   assert.ok([302, 303, 307, 308].includes(anonymous.status));
   assert.equal(anonymous.headers.get("location"), "/login?returnTo=%2Faccount");
@@ -132,12 +138,25 @@ test("protects Account and completes the real registration and login flow", asyn
   assert.ok(cookie);
   const account = await fetch(`${origin}/account`, {
     headers: { cookie },
+    redirect: "manual",
   });
-  assert.equal(account.status, 200);
-  const html = await account.text();
-  assert.match(html, /测试构建者/);
-  assert.match(html, new RegExp(email.replace(".", "\\.")));
-  assert.match(html, /会话有效/);
+  assert.ok([302, 303, 307, 308].includes(account.status));
+  assert.equal(account.headers.get("location"), "/two-factor/setup?returnTo=%2Faccount");
+
+  const setup = await fetch(`${origin}/two-factor/setup`, {
+    headers: { cookie },
+  });
+  assert.equal(setup.status, 200);
+  const setupHtml = await setup.text();
+  assert.match(setupHtml, /设置账户安全/);
+
+  const bootstrapSession = await fetch(`${origin}/api/auth/get-session`, {
+    headers: { cookie },
+  });
+  assert.equal(bootstrapSession.status, 200);
+  const bootstrapBody = await bootstrapSession.json();
+  assert.equal(bootstrapBody.user.twoFactorEnabled, false);
+  assert.equal(bootstrapBody.session.mfaVerifiedAt, null);
 });
 
 test("rejects cross-origin authentication mutations", async () => {
@@ -153,7 +172,7 @@ test("rejects cross-origin authentication mutations", async () => {
   assert.equal(response.status, 403);
 });
 
-test("completes TOTP, trusted-device, recovery replay protection, and disable", async () => {
+test("enforces session-level TOTP, recovery replay protection, and mandatory policy", async () => {
   const email = `builder-${process.pid}@example.com`;
   const password = "creeper-next-test-password";
 
@@ -166,6 +185,18 @@ test("completes TOTP, trusted-device, recovery replay protection, and disable", 
   assert.equal(firstSignIn.status, 200, await firstSignIn.text());
   const firstSession = cookieHeader(firstSignIn);
   assert.ok(firstSession.includes(`${authCookiePrefix}.session_token=`));
+
+  const parallelSignIn = await signInWithRateLimitRetry({ email, password });
+  assert.equal(parallelSignIn.status, 200, await parallelSignIn.text());
+  const parallelSession = cookieHeader(parallelSignIn);
+  assert.ok(parallelSession.includes(`${authCookiePrefix}.session_token=`));
+
+  const gatedAccount = await fetch(`${origin}/account`, {
+    headers: { cookie: firstSession },
+    redirect: "manual",
+  });
+  assert.ok([302, 303, 307, 308].includes(gatedAccount.status));
+  assert.equal(gatedAccount.headers.get("location"), "/two-factor/setup?returnTo=%2Faccount");
 
   const enable = await authMutation(
     "/api/auth/two-factor/enable",
@@ -193,12 +224,79 @@ test("completes TOTP, trusted-device, recovery replay protection, and disable", 
     headers: { cookie: enabledSession },
   });
   assert.equal(enabledAccount.status, 200);
-  assert.match(await enabledAccount.text(), /已启用/);
+  const enabledHtml = await enabledAccount.text();
+  assert.match(enabledHtml, /账户与安全/);
+  assert.match(enabledHtml, /已完成双因素验证/);
+
+  const fullyVerifiedSession = await fetch(`${origin}/api/auth/get-session`, {
+    headers: { cookie: enabledSession },
+  });
+  const fullyVerifiedBody = await fullyVerifiedSession.json();
+  assert.equal(fullyVerifiedBody.user.twoFactorEnabled, true);
+  assert.ok(fullyVerifiedBody.session.mfaVerifiedAt);
+
+  const staleAccount = await fetch(`${origin}/account`, {
+    headers: { cookie: parallelSession },
+    redirect: "manual",
+  });
+  assert.ok([302, 303, 307, 308].includes(staleAccount.status));
+  assert.equal(staleAccount.headers.get("location"), "/login?reauth=1&returnTo=%2Faccount");
+
+  const staleDirectVerification = await authMutation(
+    "/api/auth/two-factor/verify-totp",
+    { code: currentTotp(secret) },
+    parallelSession,
+  );
+  const staleDirectVerificationText = await staleDirectVerification.text();
+  assert.equal(staleDirectVerification.status, 403, staleDirectVerificationText);
+  assert.equal(JSON.parse(staleDirectVerificationText).code, "MFA_REAUTH_REQUIRED");
+
+  const staleRecoveryRotation = await authMutation(
+    "/api/auth/two-factor/generate-backup-codes",
+    { password },
+    parallelSession,
+  );
+  const staleRecoveryText = await staleRecoveryRotation.text();
+  assert.equal(staleRecoveryRotation.status, 403, staleRecoveryText);
+  assert.equal(JSON.parse(staleRecoveryText).code, "MFA_REQUIRED");
+
+  const staleSecretRead = await authMutation(
+    "/api/auth/two-factor/get-totp-uri",
+    { password },
+    parallelSession,
+  );
+  assert.equal(staleSecretRead.status, 404, await staleSecretRead.text());
+
+  const staleReEnrollment = await authMutation(
+    "/api/auth/two-factor/enable",
+    { password, method: "totp" },
+    parallelSession,
+  );
+  const staleReEnrollmentText = await staleReEnrollment.text();
+  assert.equal(staleReEnrollment.status, 403, staleReEnrollmentText);
+  assert.equal(JSON.parse(staleReEnrollmentText).code, "TWO_FACTOR_ALREADY_ENABLED");
+
+  const staleSessionList = await fetch(`${origin}/api/auth/list-sessions`, {
+    headers: { cookie: parallelSession, origin },
+  });
+  const staleSessionListText = await staleSessionList.text();
+  assert.equal(staleSessionList.status, 403, staleSessionListText);
+  assert.equal(JSON.parse(staleSessionListText).code, "MFA_REQUIRED");
+
+  const rotateRecoveryCodes = await authMutation(
+    "/api/auth/two-factor/generate-backup-codes",
+    { password },
+    enabledSession,
+  );
+  const rotateRecoveryText = await rotateRecoveryCodes.text();
+  assert.equal(rotateRecoveryCodes.status, 200, rotateRecoveryText);
+  const rotatedCodes = JSON.parse(rotateRecoveryText).backupCodes;
+  assert.equal(rotatedCodes.length, 10);
 
   const signOut = await authMutation("/api/auth/sign-out", {}, enabledSession);
   assert.equal(signOut.status, 200, await signOut.text());
 
-  const challengedSignIn = await authMutation("/api/auth/sign-in/email", { email, password });
+  const challengedSignIn = await signInWithRateLimitRetry({ email, password });
   assert.equal(challengedSignIn.status, 200);
   const challengeBody = await challengedSignIn.json();
   assert.equal(challengeBody.twoFactorRedirect, true);
@@ -206,40 +304,50 @@ test("completes TOTP, trusted-device, recovery replay protection, and disable", 
   const challengeCookie = cookieHeader(challengedSignIn);
   assert.ok(challengeCookie.includes(`${authCookiePrefix}.two_factor=`));
 
-  const finishSignIn = await authMutation(
+  const rejectedTrustBypass = await authMutation(
     "/api/auth/two-factor/verify-totp",
     { code: currentTotp(secret), trustDevice: true },
+    challengeCookie,
+  );
+  const rejectedTrustText = await rejectedTrustBypass.text();
+  assert.equal(rejectedTrustBypass.status, 400, rejectedTrustText);
+  assert.equal(JSON.parse(rejectedTrustText).code, "TRUST_DEVICE_DISABLED");
+
+  const finishSignIn = await authMutation(
+    "/api/auth/two-factor/verify-totp",
+    { code: currentTotp(secret) },
     challengeCookie,
   );
   assert.equal(finishSignIn.status, 200, await finishSignIn.text());
   const secondSession = cookieHeader(finishSignIn);
   assert.ok(secondSession.includes(`${authCookiePrefix}.session_token=`));
-  assert.ok(secondSession.includes(`${authCookiePrefix}.trust_device=`));
+  assert.ok(!secondSession.includes(`${authCookiePrefix}.trust_device=`));
 
   const secondSignOut = await authMutation("/api/auth/sign-out", {}, secondSession);
   assert.equal(secondSignOut.status, 200, await secondSignOut.text());
 
-  const trustedSignIn = await signInWithRateLimitRetry({ email, password }, secondSession);
-  const trustedText = await trustedSignIn.text();
-  assert.equal(trustedSignIn.status, 200, trustedText);
-  const trustedBody = JSON.parse(trustedText);
-  assert.equal(trustedBody.twoFactorRedirect, undefined);
-  const trustedSession = cookieHeader(trustedSignIn);
-  assert.ok(trustedSession.includes(`${authCookiePrefix}.session_token=`));
-  const trustedSignOut = await authMutation("/api/auth/sign-out", {}, trustedSession);
-  assert.equal(trustedSignOut.status, 200, await trustedSignOut.text());
-
   const recoveryChallenge = await signInWithRateLimitRetry({ email, password });
   assert.equal(recoveryChallenge.status, 200);
+  assert.equal((await recoveryChallenge.clone().json()).twoFactorRedirect, true);
   const recoveryCookie = cookieHeader(recoveryChallenge);
   const recover = await authMutation(
     "/api/auth/two-factor/verify-backup-code",
-    { code: enrollment.backupCodes[0], disableSession: false, trustDevice: false },
+    { code: rotatedCodes[0], disableSession: false },
     recoveryCookie,
   );
   assert.equal(recover.status, 200, await recover.text());
   const recoveredSession = cookieHeader(recover);
   assert.ok(recoveredSession.includes("session_token"));
+
+  const recoveredSessionResponse = await fetch(`${origin}/api/auth/get-session`, {
+    headers: { cookie: recoveredSession },
+  });
+  assert.equal(recoveredSessionResponse.status, 200);
+  assert.ok((await recoveredSessionResponse.json()).session.mfaVerifiedAt);
+  const recoveredAccount = await fetch(`${origin}/account`, {
+    headers: { cookie: recoveredSession },
+  });
+  assert.equal(recoveredAccount.status, 200);
 
   const recoveredSignOut = await authMutation("/api/auth/sign-out", {}, recoveredSession);
   assert.equal(recoveredSignOut.status, 200, await recoveredSignOut.text());
@@ -248,13 +356,13 @@ test("completes TOTP, trusted-device, recovery replay protection, and disable", 
   const replayCookie = cookieHeader(replayChallenge);
   const replayedCode = await authMutation(
     "/api/auth/two-factor/verify-backup-code",
-    { code: enrollment.backupCodes[0], disableSession: false, trustDevice: false },
+    { code: rotatedCodes[0], disableSession: false },
     replayCookie,
   );
   assert.ok([400, 401].includes(replayedCode.status), await replayedCode.text());
   const secondRecovery = await authMutation(
     "/api/auth/two-factor/verify-backup-code",
-    { code: enrollment.backupCodes[1], disableSession: false, trustDevice: false },
+    { code: rotatedCodes[1], disableSession: false },
     replayCookie,
   );
   assert.equal(secondRecovery.status, 200, await secondRecovery.text());
@@ -265,15 +373,13 @@ test("completes TOTP, trusted-device, recovery replay protection, and disable", 
     { password },
     secondRecoveredSession,
   );
-  assert.equal(disable.status, 200, await disable.text());
-  const disabledSession = mergeCookieHeaders(secondRecoveredSession, cookieHeader(disable));
-  const disabledSignOut = await authMutation("/api/auth/sign-out", {}, disabledSession);
-  assert.equal(disabledSignOut.status, 200, await disabledSignOut.text());
+  assert.equal(disable.status, 404, await disable.text());
 
-  const ordinarySignIn = await signInWithRateLimitRetry({ email, password });
-  assert.equal(ordinarySignIn.status, 200);
-  assert.equal((await ordinarySignIn.json()).twoFactorRedirect, undefined);
-  assert.ok(cookieHeader(ordinarySignIn).includes("session_token"));
+  const finalSignOut = await authMutation("/api/auth/sign-out", {}, secondRecoveredSession);
+  assert.equal(finalSignOut.status, 200, await finalSignOut.text());
+  const mandatoryChallenge = await signInWithRateLimitRetry({ email, password });
+  assert.equal(mandatoryChallenge.status, 200);
+  assert.equal((await mandatoryChallenge.json()).twoFactorRedirect, true);
 });
 
 test("renders the branded not-found boundary and security headers", async () => {

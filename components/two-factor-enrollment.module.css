@@ -1,0 +1,336 @@
+@layer components {
+  .flow {
+    min-width: 0;
+    display: grid;
+  }
+
+  .messageRegion {
+    min-height: 0;
+    margin-top: 1.25rem;
+  }
+
+  .notice,
+  .error {
+    margin: 0;
+    padding: 0.75rem 0.875rem;
+    border-radius: 0.75rem;
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    text-align: center;
+  }
+
+  .notice {
+    border: 1px solid color-mix(in srgb, var(--color-status-success-text) 25%, transparent);
+    color: var(--color-status-success-text);
+    background: color-mix(in srgb, var(--color-status-success) 9%, transparent);
+  }
+
+  .error {
+    border: 1px solid color-mix(in srgb, var(--color-status-danger-text) 28%, transparent);
+    color: var(--color-status-danger-text);
+    background: color-mix(in srgb, var(--color-status-danger) 7%, transparent);
+  }
+
+  .passwordStage,
+  .recoveryStage {
+    width: min(27.5rem, 100%);
+    margin: 1.75rem auto 0;
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .assurance {
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 0.875rem;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 0.875rem;
+    background: var(--color-bg-muted);
+  }
+
+  .shield {
+    width: 2.25rem;
+    height: 2.25rem;
+    display: grid;
+    place-items: center;
+    border-radius: 0.6875rem;
+    color: var(--color-text-on-primary);
+    background: var(--color-action-primary);
+  }
+
+  .shield svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
+  }
+
+  .assurance strong,
+  .instruction strong {
+    display: block;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+
+  .assurance p,
+  .qrPanel p {
+    margin: 0.3125rem 0 0;
+    color: var(--color-text-tertiary);
+    font-size: 0.75rem;
+    line-height: 1.55;
+  }
+
+  .instruction p {
+    margin: 0.3125rem 0 0;
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
+    line-height: 1.55;
+  }
+
+  .form {
+    display: grid;
+    gap: 0.875rem;
+  }
+
+  .field {
+    min-width: 0;
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .field label {
+    color: var(--color-text-primary);
+    font-size: 0.8125rem;
+    font-weight: 620;
+    line-height: 1.4;
+  }
+
+  .field input {
+    width: 100%;
+    min-height: 3.25rem;
+    padding-inline: 1rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 0.75rem;
+    outline: 0;
+    appearance: none;
+    color: var(--color-text-primary);
+    background: var(--color-surface-default);
+    font-size: 1rem;
+    transition:
+      border-color var(--motion-fast) var(--motion-ease-standard),
+      box-shadow var(--motion-fast) var(--motion-ease-standard);
+  }
+
+  .field input:focus-visible {
+    border-color: var(--color-focus-ring);
+    box-shadow: var(--ds-shadow-focus);
+  }
+
+  .field input[aria-invalid="true"] { border-color: var(--color-status-danger-text); }
+
+  .primaryAction,
+  .copyAction {
+    width: 100%;
+    min-height: 3.25rem;
+    border-radius: 0.8125rem;
+  }
+
+  .scanStage {
+    margin-top: 1.75rem;
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .qrPanel {
+    min-width: 0;
+    padding: 1.25rem;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 1rem;
+    background: var(--color-bg-muted);
+    text-align: center;
+  }
+
+  .qr {
+    width: fit-content;
+    max-width: 100%;
+    padding: 0.875rem;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 0.875rem;
+    background: white;
+    box-shadow: 0 0.5rem 1.5rem color-mix(in srgb, var(--color-text-primary) 8%, transparent);
+  }
+
+  .qr svg {
+    width: min(12.25rem, 100%);
+    height: auto;
+    display: block;
+  }
+
+  .scanInstructions {
+    min-width: 0;
+    display: grid;
+    align-content: start;
+    gap: 1rem;
+  }
+
+  .instruction {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  .instruction > span {
+    width: 1.75rem;
+    height: 1.75rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--color-text-on-primary);
+    background: var(--color-action-primary);
+    font: 700 0.6875rem/1 var(--font-geist-mono), monospace;
+  }
+
+  .manualKey {
+    min-width: 0;
+    display: grid;
+    gap: 0.375rem;
+  }
+
+  .manualKey > div {
+    min-width: 0;
+    min-height: var(--size-target-min);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .manualKey span {
+    color: var(--color-text-tertiary);
+    font-size: 0.6875rem;
+  }
+
+  .manualKey button {
+    min-width: var(--size-target-min);
+    min-height: var(--size-target-min);
+    padding-inline: 0.5rem;
+    border: 0;
+    border-radius: 0.625rem;
+    color: var(--color-text-link);
+    background: transparent;
+    font-size: 0.75rem;
+    font-weight: 680;
+    cursor: pointer;
+  }
+
+  .manualKey button:hover { background: var(--color-bg-muted); }
+
+  .manualKey code {
+    padding: 0.75rem;
+    border-radius: 0.6875rem;
+    color: var(--color-text-primary);
+    background: var(--color-bg-muted);
+    font: 650 0.75rem/1.55 var(--font-geist-mono), monospace;
+    overflow-wrap: anywhere;
+    user-select: all;
+  }
+
+  .codeInput {
+    text-align: center;
+    font: 650 1.125rem/1 var(--font-geist-mono), monospace !important;
+    letter-spacing: 0.32em;
+  }
+
+  .recoveryNotice {
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.75rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 0.875rem;
+    background: var(--color-bg-muted);
+  }
+
+  .recoveryNotice > span {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--color-text-on-primary);
+    background: var(--color-action-primary);
+    font: 750 0.75rem/1 var(--font-geist-mono), monospace;
+  }
+
+  .recoveryNotice p {
+    margin: 0;
+    color: var(--color-text-tertiary);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+  }
+
+  .codes {
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    list-style: none;
+  }
+
+  .codes code {
+    min-height: 2.75rem;
+    padding-inline: 0.5rem;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 0.625rem;
+    background: var(--color-bg-muted);
+    font: 650 0.75rem/1 var(--font-geist-mono), monospace;
+  }
+
+  .confirmation {
+    min-height: var(--size-target-min);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--color-text-primary);
+    font-size: 0.8125rem;
+    font-weight: 620;
+    cursor: pointer;
+  }
+
+  .confirmation input {
+    width: 1.125rem;
+    height: 1.125rem;
+    flex: 0 0 auto;
+    accent-color: var(--color-action-primary);
+  }
+}
+
+@container security-setup (width >= 40rem) {
+  .scanStage {
+    grid-template-columns: minmax(14rem, 0.88fr) minmax(17rem, 1.12fr);
+    align-items: stretch;
+  }
+}
+
+@media (width < 23rem) {
+  .codes { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (forced-colors: active) {
+  .assurance,
+  .qrPanel,
+  .manualKey code,
+  .recoveryNotice,
+  .codes code { background: Canvas; }
+}

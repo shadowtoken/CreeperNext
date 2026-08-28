@@ -3,7 +3,7 @@
 一个可直接启动的标准 Next.js 产品脚手架。它只提供大多数产品真正共用的地基：
 
 - 响应式 Landing Page
-- 邮箱注册、登录、退出、TOTP 双因素认证与数据库会话
+- 邮箱注册、强制 TOTP 双因素认证、退出与数据库会话
 - 服务端鉴权与 fail-closed 受保护路由
 - 本地 UI 组件、Tailwind CSS 4 与语义 Design Tokens
 - CSS 动效 Token、Reduced Motion 和键盘可访问性
@@ -80,10 +80,12 @@ CreeperNext/
 │   ├── (auth)/                            # 认证页面路由组；括号目录不会出现在 URL 中
 │   │   ├── login/page.tsx                # /login；登录页面
 │   │   ├── register/page.tsx             # /register；注册页面
-│   │   └── two-factor/page.tsx           # /two-factor；TOTP / 恢复码登录挑战
+│   │   └── two-factor/
+│   │       ├── page.tsx                  # /two-factor；TOTP / 恢复码登录挑战
+│   │       └── setup/page.tsx            # /two-factor/setup；首次强制绑定三步引导
 │   ├── (protected)/                       # 受保护页面路由组；统一挂载服务端门禁
-│   │   ├── layout.tsx                    # 每次进入子页面前检查 Session，未登录则跳转
-│   │   └── account/page.tsx              # /account；最小受保护页面样板
+│   │   ├── layout.tsx                    # 同时检查 Session、账户 MFA 与当前会话 MFA 证明
+│   │   └── account/page.tsx              # /account；账户与安全 Settings 样板
 │   ├── api/auth/[...all]/route.ts        # /api/auth/*；Better Auth 的 Catch-all HTTP 入口
 │   ├── globals.css                       # 全局唯一入口；只导入 Creeper Visual System
 │   ├── page.module.css                   # Landing 独有的表达型页面样式
@@ -100,13 +102,15 @@ CreeperNext/
 │   ├── login-form.tsx                    # 登录交互 Client Component
 │   ├── register-form.tsx                 # 注册交互 Client Component
 │   ├── two-factor-challenge-form.tsx     # 第二因素登录挑战；支持 TOTP 与恢复码
-│   ├── two-factor-settings.tsx           # 启用、确认、恢复码轮换和关闭 2FA
+│   ├── two-factor-enrollment.tsx          # 确认密码、扫码、保存恢复码并验证的强制引导
+│   ├── security-setup-shell.tsx           # 宽版安全设置页面骨架
+│   ├── two-factor-settings.tsx            # 已启用状态与恢复码轮换；不能关闭 2FA
 │   └── ...                               # Header、Footer、品牌和页面共享组件
 
 
 ├── server/                               # 只能在服务端执行的认证与数据基础设施
 │   ├── auth-config.ts                    # Better Auth、SQLite、Cookie 和密码策略配置
-│   └── auth.ts                           # getSession / requireSession 服务端接口
+│   └── auth.ts                           # Session 与完整 MFA 服务端门禁
 
 
 ├── lib/                                  # 跨层复用的小型工具和浏览器端适配器
@@ -186,7 +190,7 @@ Server Page / Layout
 
 圆括号表示 Route Group，只用来组织代码，不会进入 URL，所以文件 `app/(protected)/account/page.tsx` 对外仍然是 `/account`，而不是 `/protected/account`。
 
-它的价值是把一组私有页面放在同一个 Layout 下。当前 `app/(protected)/layout.tsx` 会在服务端调用 `requireSession()`；没有有效 Session 时直接跳到登录页，因此未来把 `/settings`、`/billing` 等页面放进这个组，就会默认受到同一层门禁保护。
+它的价值是把一组私有页面放在同一个 Layout 下。当前 `app/(protected)/layout.tsx` 会在服务端调用 `requireTwoFactorSession()`；没有 Session 时跳到登录页，账户未绑定 TOTP 时跳到 `/two-factor/setup`，当前 Session 没有 `mfaVerifiedAt` 时要求重新走密码与第二因素。因此未来把 `/settings`、`/billing` 等页面放进这个组，会默认继承完整 MFA 门禁。
 
 目录名 `(protected)` 本身没有任何安全能力，真正的保护来自 Layout 中的服务端检查。Layout 是页面访问的 fail-closed 默认值，但不是唯一授权层：涉及私有数据、写操作、Server Action 或 API 时，仍要在最靠近数据的位置再次校验用户身份和权限。
 
@@ -230,7 +234,7 @@ app/layout.tsx
 | --- | --- | --- |
 | App Router，页面与 Layout 默认 Server Component | 推荐 | 数据与密钥留在服务端，减少浏览器 JavaScript；只有表单、退出按钮等交互叶子使用 `"use client"` |
 | 用 Route Group 区分 `(auth)` 与 `(protected)` | 推荐 | URL 保持干净，同时可以按业务边界共享 Layout；不要误以为目录名本身能鉴权 |
-| 在 `(protected)/layout.tsx` 做统一 Session 门禁 | 推荐 | 新增私有页面默认 fail-closed；数据读取和写操作仍需再次授权 |
+| 在 `(protected)/layout.tsx` 做统一完整 MFA 门禁 | 推荐 | 同时验证账户已绑定和当前 Session 已完成第二因素；数据读取和写操作仍需再次授权 |
 | 用 `[...all]/route.ts` 承接 Better Auth 接口 | 推荐 | 让认证库集中拥有注册、登录、Session 和 Cookie 协议，应用不重复实现安全敏感细节 |
 | `server/` 与 `lib/auth-client.ts` 分开 | 推荐 | 服务端秘密不会误进 Client Bundle，浏览器端只暴露必要客户端能力 |
 | 业务只依赖本地 `components/ui` | 推荐 | 可以引入 shadcn 或其他源码型组件，又不会把业务永久锁死在第三方 API 上 |
@@ -259,11 +263,24 @@ app/layout.tsx
 
 为了避免重复注册暴露邮箱是否存在，注册成功后不会自动登录；用户会回到登录页，再建立服务端会话。基础版没有发送验证邮件，因此“拥有这个邮箱”尚未被验证，不能把邮箱验证状态作为权限依据。生产项目应接入邮件发送服务并启用邮箱验证，或替换为 OAuth、Passkey、企业 SSO。
 
-### TOTP 双因素认证闭环
+### 强制 TOTP 双因素认证闭环
 
-登录用户可以在 `/account` 输入当前密码开始设置身份验证器。服务端生成 TOTP 密钥和十枚加密存储的恢复码，但在用户用首枚 6 位动态代码确认以前，`twoFactorEnabled` 保持关闭；这避免把未完成的绑定误认为有效第二因素。确认后，邮箱密码登录只会创建一个最长十分钟的第二因素挑战，不会提前建立业务 Session。`/two-factor` 可以用 TOTP 或一枚一次性恢复码完成挑战，并可选择只在私人设备上信任 30 天。
+默认认证状态机是：`注册 → 首次密码登录 → /two-factor/setup → 确认密码 → 扫码 → 保存恢复码并验证动态代码 → 进入应用`。TOTP 不能出现在最初的姓名/邮箱/密码表单里，因为此时还没有可绑定的用户和 TOTP 密钥；但它是首次进入任何受保护页面前不可跳过的第二阶段。注册后不会自动登录，以保留重复邮箱枚举保护。
 
-恢复码只在首次启用或主动重新生成后显示；重新生成会让全部旧码立即失效，使用过的恢复码也不能再次使用。查看设置密钥、重新生成恢复码、关闭 2FA 都要求现有服务端 Session，其中敏感管理动作还会重新校验当前密码。登录挑战每次最多尝试五次，连续失败会触发账户级临时锁定。不要把 TOTP 密钥、动态码或恢复码写入日志、Analytics、错误追踪和持久浏览器存储。
+首次引导会生成 TOTP 密钥和十枚加密存储的恢复码；页面先要求保存恢复码，最后才用 6 位动态代码原子完成绑定，因此刷新或离开未完成流程不会提前开启账户。动态代码确认以前，`twoFactorEnabled` 保持关闭。以后每次密码登录都只创建最长十分钟的第二因素挑战，不会提前建立业务 Session；`/two-factor` 使用 TOTP 或一枚一次性恢复码完成验证。本脚手架默认拒绝 `trustDevice:true`，不提供 30 天免验证，也禁用关闭 2FA 的 HTTP 端点。
+
+门禁不能只检查 `user.twoFactorEnabled`。该字段只证明账户绑定过验证器，不能证明当前浏览器 Session 做过验证。因此 `session` 表额外保存只读的 `mfaVerifiedAt`：仅 `/two-factor/verify-totp` 和 `/two-factor/verify-backup-code` 成功创建的新 Session 才能得到该时间。业务页面、Server Action、Route Handler 和数据层都应同时要求：
+
+```text
+user.twoFactorEnabled === true
+session.mfaVerifiedAt != null
+```
+
+这样即使用户在两个浏览器先建立密码 Session，其中一个完成绑定，另一个旧 Session 仍然不能进入业务区。未来增加 OAuth、Magic Link、Passkey 等登录方式时，新 Session 默认也没有 MFA 证明；必须为该方式设计明确的第二因素重认证流程，不能只看账户级开关。
+
+页面门禁并不自动保护 `/api/auth/*`。`server/auth-config.ts` 因此还会在 Better Auth 的 HTTP hook 中重新读取权威数据库 Session：没有 `mfaVerifiedAt` 的 bootstrap/旧 Session 只能完成首次绑定、重新登录、第二因素挑战或退出，不能轮换恢复码、替换已绑定验证器、修改凭据、连接账户或管理其他 Session。已绑定的 TOTP 种子不会再通过 HTTP 导出。这里使用反向 allowlist，让未来升级时新增的 Session 管理端点也默认继承 MFA 门禁，而不是等 UI 使用后才补保护。
+
+恢复码只在首次启用或主动重新生成后显示；重新生成会让全部旧码立即失效，使用过的恢复码也不能再次使用。重新生成需要当前完整 MFA Session 并复验密码。登录挑战连续失败五次会触发账户级临时锁定。不要把 TOTP 密钥、动态码或恢复码写入日志、Analytics、错误追踪和持久浏览器存储。
 
 实现契约对应 Better Auth 官方的 [Two-Factor Authentication](https://better-auth.com/docs/plugins/2fa) 与 [Dynamic Base URL / Trusted Origins](https://better-auth.com/docs/reference/options) 文档；升级 Better Auth 时应先复核这两处协议，再运行完整认证测试。
 
@@ -310,7 +327,7 @@ pnpm test:responsive
 pnpm audit --prod
 ```
 
-`pnpm test` 会构建生产版本、创建隔离的临时认证数据库，并验证 Landing、恶意跳转过滤、显式可信/恶意 Origin、真实注册/登录会话、TOTP 绑定与挑战、可信设备免挑战、恢复码重放拒绝、关闭 2FA、受保护路由、404、安全响应头、robots 与 sitemap。
+`pnpm test` 会构建生产版本、创建隔离的临时认证数据库，并验证 Landing、恶意跳转过滤、显式可信/恶意 Origin、真实注册/登录、强制 TOTP 引导、Session 级 MFA 证明、双浏览器旧会话及敏感认证 API 拒绝、信任设备绕过拒绝、恢复码重放拒绝、关闭 2FA 拒绝、受保护路由、404、安全响应头、robots 与 sitemap。
 
 `pnpm test:responsive` 会再次使用生产构建和隔离数据库，在 9 个 Chromium 视口验证 Landing、Login、Register、404、真实登录态 Account、边界上下 1px、双轴可达性、元素与祖先裁切、控件重叠、44×44 目标、200% 文本放大、Reduced Motion、Light/Dark 对比度、错误态与 Axe。认证 Setup 只建立一次测试会话，不会为了绕过门禁而关闭生产限流。失败时保留 Screenshot、Video 和 Trace。
 

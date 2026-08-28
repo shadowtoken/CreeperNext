@@ -22,7 +22,6 @@ export function TwoFactorChallengeForm({ returnTo }: { returnTo: string }) {
 
     const form = new FormData(event.currentTarget);
     const code = String(form.get("code") ?? "").replaceAll(" ", "").trim();
-    const trustDevice = form.get("trustDevice") === "on";
     if (mode === "totp" && !/^\d{6}$/.test(code)) {
       setError("请输入身份验证器显示的 6 位数字。");
       return;
@@ -35,11 +34,10 @@ export function TwoFactorChallengeForm({ returnTo }: { returnTo: string }) {
     setPending(true);
     try {
       const result = mode === "totp"
-        ? await authClient.twoFactor.verifyTotp({ code, trustDevice })
+        ? await authClient.twoFactor.verifyTotp({ code })
         : await authClient.twoFactor.verifyBackupCode({
             code,
             disableSession: false,
-            trustDevice,
           });
 
       if (result.error) {
@@ -68,6 +66,7 @@ export function TwoFactorChallengeForm({ returnTo }: { returnTo: string }) {
           {mode === "totp" ? "身份验证器代码" : "恢复码"}
         </label>
         <input
+          className={mode === "totp" ? styles.otpInput : undefined}
           key={mode}
           id="two-factor-code"
           name="code"
@@ -84,26 +83,20 @@ export function TwoFactorChallengeForm({ returnTo }: { returnTo: string }) {
         />
       </div>
 
-      <label className="flex min-h-target cursor-pointer items-center gap-3 text-xs text-secondary-foreground">
-        <input className="size-4 accent-primary" name="trustDevice" type="checkbox" />
-        在这台私人设备上记住 30 天
-      </label>
-
       {error && <p className={styles.error} id="two-factor-error" role="alert">{error}</p>}
 
       <Button className={cn(styles.submit, "min-h-[3.25rem] rounded-[0.8125rem]")} disabled={pending} type="submit">
-        {pending ? "正在验证…" : "完成验证"}
+        {pending ? "正在验证…" : "验证并登录"}
       </Button>
 
-      <Button
-        className="min-h-[3.25rem] w-full rounded-[0.8125rem]"
+      <button
+        className={styles.modeSwitch}
         disabled={pending}
         onClick={() => switchMode(mode === "totp" ? "backup" : "totp")}
         type="button"
-        variant="ghost"
       >
-        {mode === "totp" ? "改用恢复码" : "改用身份验证器"}
-      </Button>
+        {mode === "totp" ? "无法使用验证器？改用恢复码" : "返回身份验证器代码"}
+      </button>
     </form>
   );
 }

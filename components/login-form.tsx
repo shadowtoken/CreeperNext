@@ -43,7 +43,10 @@ export function LoginForm({
         return;
       }
 
-      router.replace(returnTo);
+      // A successful password sign-in still passes through the server-owned
+      // enrollment gate. Enrolled users are forwarded immediately; new users
+      // must bind and verify an authenticator first.
+      router.replace(`/two-factor/setup?returnTo=${encodeURIComponent(returnTo)}`);
       router.refresh();
     } catch {
       setError("网络暂时不可用，请稍后重试。");
@@ -60,7 +63,7 @@ export function LoginForm({
     <form className={cn(styles.form, "@container/form")} onSubmit={handleSubmit}>
       {registered && (
         <p className={styles.success} id="login-notice" role="status">
-          账户已创建，请登录以建立会话。
+          账户已创建；登录后继续绑定身份验证器。
         </p>
       )}
       <div className={styles.field}>

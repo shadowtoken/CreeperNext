@@ -268,4 +268,6 @@ export async function authenticate(page: Page) {
   expect(response.status(), body).toBe(200);
   const session = JSON.parse(body);
   expect(session?.user?.email).toBe("responsive-browser@example.com");
+  expect(session?.user?.twoFactorEnabled).toBe(true);
+  expect(session?.session?.mfaVerifiedAt).toBeTruthy();
 }

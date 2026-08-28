@@ -29,7 +29,8 @@ test("the authenticated surface keeps the same invariants", async ({ page }) => 
   await authenticate(page);
   const response = await page.goto("/account");
   expect(response?.status()).toBe(200);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("响应式测试");
+  await expect(page.getByRole("heading", { level: 1, name: "账户与安全" })).toBeVisible();
+  await expect(page.getByText("响应式测试", { exact: true })).toBeVisible();
   await expectResponsiveLayout(page);
   await expectTouchTargets(page);
 });

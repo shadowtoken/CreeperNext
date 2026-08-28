@@ -157,6 +157,27 @@ Account、C 端和未来 Admin 优先稳定的信息层级、可预测布局、�
 
 两者共享 Token 与基础 UI，不强迫使用同一种页面构图。
 
+### Auth 与安全设置 Pattern
+
+认证页是任务界面，不是第二个 Landing。登录与注册使用窄的单任务表单；需要 QR、恢复码或多步状态的安全引导使用独立宽版 Surface。不要把宣传卡、产品口号和长期安全管理表单堆在登录主任务旁边。
+
+强制 MFA 的参考 Pattern 是：
+
+```text
+Credential Form
+  → Enrollment Flow（确认身份 / 绑定验证器 / 保存并验证）
+  → Product Settings（状态行 / 按需 Re-auth / 恢复管理）
+```
+
+- 页面标题使用 Product Typography，不使用 Landing 的超大 Display Heading；
+- 密码复验表单只在用户发起敏感操作后展开，不常驻占满页面；
+- Pill 只表达状态，产品按钮使用 10–12px 控件圆角；
+- OTP 保留一个真实 Input，用等宽数字和字距表达六位代码，避免六个输入框带来的粘贴与读屏问题；
+- QR 与说明在容器足够宽时并排，窄容器自然堆叠；
+- 恢复码只展示一次，并要求用户明确确认已经保存；
+- 错误必须靠近当前步骤，不允许同时出现互相矛盾的成功与失败反馈；
+- Account 使用 Settings 信息架构，不显示 `PROTECTED ROUTE`、`NEXT LAYER` 等脚手架自述。
+
 ## 7. 组件契约
 
 业务代码只从 `components/ui` 使用基础 UI。shadcn、Base UI、Radix、React Aria 或其他组件先进入本地边界，再适配 Token、RSC 和状态规范。

@@ -6,6 +6,7 @@ function testsForProject(name: string) {
     /responsive\.spec\.ts/,
     ...(["mobile-390", "compact-1280x800"].includes(name) ? [/accessibility\.spec\.ts/] : []),
     ...(["mobile-390", "compact-1280x800"].includes(name) ? [/capabilities\.spec\.ts/] : []),
+    ...(["mobile-390", "compact-1280x800"].includes(name) ? [/auth-onboarding\.spec\.ts/] : []),
     ...(["regular-1024", "compact-1280x832"].includes(name) ? [/boundaries\.spec\.ts/] : []),
   ];
 }
