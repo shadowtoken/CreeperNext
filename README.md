@@ -332,3 +332,20 @@ pnpm audit --prod
 `pnpm test:responsive` 会再次使用生产构建和隔离数据库，在 9 个 Chromium 视口验证 Landing、Login、Register、404、真实登录态 Account、边界上下 1px、双轴可达性、元素与祖先裁切、控件重叠、44×44 目标、200% 文本放大、Reduced Motion、Light/Dark 对比度、错误态与 Axe。认证 Setup 只建立一次测试会话，不会为了绕过门禁而关闭生产限流。失败时保留 Screenshot、Video 和 Trace。
 
 仓库已经提供 `.github/workflows/quality.yml`：生产依赖审计 → Lint → TypeScript → Node 集成测试 → Chromium 响应式 / 无障碍门禁。自动扫描不能替代真实浏览器 Zoom、键盘、VoiceOver 和真机 Safe Area 人工验收。
+# 工程分层约定
+
+脚手架采用“路由与业务解耦”的目录边界，新增功能按下表放置：
+
+| 目录 | 职责 |
+| --- | --- |
+| `app` | 路由、布局、Provider，以及极薄的页面组装 |
+| `core` | 鉴权、领域基础逻辑、错误与操作规则 |
+| `components/ui` | Button、Input 等基础 UI 原子 |
+| `components/shared` | 跨业务域复合组件 |
+| `features/<domain>` | 一个业务域的 `components`、`lib`、`index.ts` |
+| `services/api/<domain>` | 对应后端业务域的请求层与 DTO 映射 |
+| `services/ws` | 实时连接与订阅 |
+| `types/api` / `types/domain` | 传输类型与前端领域类型 |
+| `hooks` | 查询、认证、实时状态等客户端 Hooks |
+
+约束：页面不直接拼装跨域业务逻辑；服务端数据优先在 Server Component/Server Action 获取；只有交互叶子组件才使用 `use client`；未启用的业务域不预装请求库或 WebSocket 运行时。
