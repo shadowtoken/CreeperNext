@@ -9,12 +9,11 @@ import { AuthPasswordInput } from "./auth-password-input";
 import { Button } from "./ui/button";
 import styles from "./two-factor-enrollment.module.css";
 
-type Stage = "password" | "scan" | "recovery";
+type Stage = "password" | "scan";
 
 type Enrollment = {
   totpURI: string;
   secret: string;
-  backupCodes: string[];
 };
 
 export function TwoFactorEnrollment({
@@ -28,7 +27,6 @@ export function TwoFactorEnrollment({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [codesSaved, setCodesSaved] = useState(false);
 
   async function beginEnrollment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -49,7 +47,6 @@ export function TwoFactorEnrollment({
       setEnrollment({
         totpURI: result.data.totpURI,
         secret: uri.searchParams.get("secret") ?? "",
-        backupCodes: result.data.backupCodes,
       });
       setStage("scan");
       formElement.reset();
@@ -88,17 +85,6 @@ export function TwoFactorEnrollment({
     }
   }
 
-  async function copyRecoveryCodes() {
-    if (!enrollment) return;
-    resetMessages();
-    try {
-      await navigator.clipboard.writeText(enrollment.backupCodes.join("\n"));
-      setNotice("已复制全部恢复码。请粘贴到密码管理器等安全位置。");
-    } catch {
-      setError("浏览器没有允许复制，请逐枚手动保存恢复码。");
-    }
-  }
-
   async function copySetupSecret() {
     if (!enrollment) return;
     resetMessages();
@@ -110,22 +96,9 @@ export function TwoFactorEnrollment({
     }
   }
 
-  function continueToRecovery() {
-    setStage("recovery");
-    setCodesSaved(false);
-    resetMessages();
-  }
-
-  function returnToScanner() {
-    setStage("scan");
-    setCodesSaved(false);
-    resetMessages();
-  }
-
   function restartEnrollment() {
     setEnrollment(null);
     setStage("password");
-    setCodesSaved(false);
     resetMessages();
   }
 
@@ -206,74 +179,16 @@ export function TwoFactorEnrollment({
               <code data-enrollment-secret>{enrollment.secret}</code>
             </div>
 
-            <div className={styles.form}>
-              <Button className={styles.primaryAction} onClick={continueToRecovery} type="button">
-                我已扫描，继续
-              </Button>
-              <Button onClick={restartEnrollment} type="button" variant="ghost">
-                重新生成二维码
-              </Button>
-            </div>
+            <form className={styles.form} onSubmit={completeEnrollment}>
+              <div className={styles.field}>
+                <label htmlFor="enrollment-code">输入身份验证器当前的 6 位代码</label>
+                <input className={styles.codeInput} id="enrollment-code" name="code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" minLength={6} maxLength={6} placeholder="000000" aria-describedby={error ? "enrollment-error" : undefined} aria-invalid={error ? true : undefined} required />
+              </div>
+              <Button className={styles.primaryAction} disabled={pending} type="submit">{pending ? "正在验证…" : "验证并启用"}</Button>
+              <Button onClick={restartEnrollment} type="button" variant="ghost">重新生成二维码</Button>
+            </form>
           </div>
         </div>
-      )}
-
-      {stage === "recovery" && enrollment && (
-        <form className={styles.recoveryStage} onSubmit={completeEnrollment}>
-          <div className={styles.recoveryNotice}>
-            <span aria-hidden="true">!</span>
-            <p>先保存恢复码，再输入动态代码完成绑定。验证成功以前，账户仍不会进入受保护应用。</p>
-          </div>
-
-          <ul className={styles.codes} aria-label="账户恢复码">
-            {enrollment.backupCodes.map((code) => (
-              <li key={code}><code>{code}</code></li>
-            ))}
-          </ul>
-
-          <Button className={styles.copyAction} onClick={copyRecoveryCodes} type="button" variant="secondary">
-            复制全部恢复码
-          </Button>
-
-          <label className={styles.confirmation}>
-            <input
-              checked={codesSaved}
-              onChange={(event) => setCodesSaved(event.currentTarget.checked)}
-              type="checkbox"
-            />
-            <span>我已经把恢复码保存到安全位置</span>
-          </label>
-
-          <div className={styles.field}>
-            <label htmlFor="enrollment-code">输入身份验证器当前的 6 位代码</label>
-            <input
-              className={styles.codeInput}
-              id="enrollment-code"
-              name="code"
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              pattern="[0-9]{6}"
-              minLength={6}
-              maxLength={6}
-              placeholder="000000"
-              aria-describedby={error ? "enrollment-error" : undefined}
-              aria-invalid={error ? true : undefined}
-              required
-            />
-          </div>
-
-          <Button
-            className={styles.primaryAction}
-            disabled={!codesSaved || pending}
-            type="submit"
-          >
-            {pending ? "正在验证…" : "保存并完成设置"}
-          </Button>
-          <Button disabled={pending} onClick={returnToScanner} type="button" variant="ghost">
-            返回二维码
-          </Button>
-        </form>
       )}
     </div>
   );

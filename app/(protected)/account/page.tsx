@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Brand } from "../../../components/brand";
 import { SignOutButton } from "../../../components/sign-out-button";
 import { TwoFactorSettings } from "../../../components/two-factor-settings";
+import { ChangePasswordForm } from "../../../components/change-password-form";
 import { Kicker } from "../../../components/ui/kicker";
 import { siteConfig } from "../../../config/site";
 import { requireTwoFactorSession } from "../../../server/auth";
@@ -67,7 +68,8 @@ export default async function AccountPage() {
             </div>
           </section>
 
-          <TwoFactorSettings initiallyEnabled={Boolean(user.twoFactorEnabled)} />
+      <TwoFactorSettings initiallyEnabled={Boolean(user.twoFactorEnabled)} />
+      <section><h2>修改密码</h2><p>定期更新密码，保护你的登录凭据。</p><ChangePasswordForm /></section>
         </div>
 
         <footer className={styles.pageFooter}>

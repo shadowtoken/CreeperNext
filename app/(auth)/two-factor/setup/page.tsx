@@ -7,7 +7,7 @@ import { getSession } from "../../../../server/auth";
 
 export const metadata: Metadata = {
   title: "保护账户",
-  description: "绑定身份验证器并保存账户恢复码。",
+  description: "绑定身份验证器并完成二次验证。",
   robots: { index: false, follow: false },
 };
 

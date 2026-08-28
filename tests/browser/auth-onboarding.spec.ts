@@ -36,18 +36,8 @@ test("registration is gated by the complete MFA enrollment flow", async ({ page 
   await expectSetupGeometry(page);
   await expectResponsiveLayout(page);
   await expectTouchTargets(page);
-  await page.getByRole("button", { name: "我已扫描，继续" }).click();
-
-  await expect(page.getByRole("list", { name: "账户恢复码" })).toBeVisible();
-  await expect(page.getByRole("list", { name: "账户恢复码" }).getByRole("listitem")).toHaveCount(10);
-  await expectSetupGeometry(page);
-  await expectResponsiveLayout(page);
-  await expectTouchTargets(page);
-  await expectNoAxeViolations(page);
-
-  await page.getByText("我已经把恢复码保存到安全位置").click();
   await page.getByLabel("输入身份验证器当前的 6 位代码").fill(currentTotp(secret!));
-  await page.getByRole("button", { name: "保存并完成设置" }).click();
+  await page.getByRole("button", { name: "验证并启用" }).click();
 
   await expect(page).toHaveURL(/\/account$/);
   await expect(page.getByRole("heading", { level: 1, name: "账户与安全" })).toBeVisible();

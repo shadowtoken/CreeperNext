@@ -8,7 +8,7 @@ import { getSession } from "../../../server/auth";
 
 export const metadata: Metadata = {
   title: "双因素验证",
-  description: "使用身份验证器或恢复码完成安全登录。",
+  description: "使用身份验证器完成安全登录。",
   robots: { index: false, follow: false },
 };
 
@@ -26,7 +26,7 @@ export default async function TwoFactorPage({
     <AuthShell
       eyebrow="SECURITY CHECK"
       title="再确认一次是你"
-      description="打开身份验证器并输入当前 6 位代码；设备不可用时可以改用恢复码。"
+      description="打开身份验证器并输入当前 6 位代码。"
       footer={<>验证请求有问题？<Link href={`/login?returnTo=${encodeURIComponent(returnTo)}`}>重新登录</Link></>}
     >
       <TwoFactorChallengeForm returnTo={returnTo} />
