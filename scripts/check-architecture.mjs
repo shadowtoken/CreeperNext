@@ -13,8 +13,9 @@ const sourceRoots = /^(app|components|config|core|features|lib|server|services)\
 const sourceFile = /\.(?:[cm]?[jt]sx?|css)$/;
 const allowedEnvReaders = new Set([
   "config/env.ts",
+  "config/database.ts",
+  "config/auth.ts",
   "next.config.ts",
-  "server/auth-config.ts",
 ]);
 const failures = [];
 

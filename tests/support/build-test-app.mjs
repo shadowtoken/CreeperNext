@@ -1,88 +1,17 @@
 import { spawn } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
+import { testEnvironment } from "./database.mjs";
 
-const cwd = process.cwd();
-const temporaryDirectory = mkdtempSync(path.join(tmpdir(), "creeper-build-"));
-const environment = {
-  ...process.env,
-  AUTH_DB_PATH: path.join(temporaryDirectory, "auth.sqlite"),
-  AUTH_COOKIE_PREFIX: "creeper_build_test",
-  BETTER_AUTH_SECRET: "creeper-build-test-secret-at-least-thirty-two-characters",
-  BETTER_AUTH_URL: "http://127.0.0.1:3200",
-  SITE_URL: "http://127.0.0.1:3200",
-};
-const authCli = path.join(cwd, "node_modules/auth/dist/index.mjs");
-const nextCli = path.join(cwd, "node_modules/next/dist/bin/next");
-
-let activeChild;
-let cleaned = false;
-let stopping = false;
-let interruptionExitCode = 1;
-
-function cleanup() {
-  if (cleaned) return;
-  cleaned = true;
-  rmSync(temporaryDirectory, { force: true, recursive: true });
-}
-
-function stop(signal = "SIGTERM") {
-  if (stopping) return;
-  stopping = true;
-  interruptionExitCode = signal === "SIGINT" ? 130 : 143;
-  if (activeChild?.exitCode === null) activeChild.kill(signal);
-}
-
-function runChild(args) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, args, {
-      cwd,
-      env: environment,
-      stdio: "inherit",
-    });
-    activeChild = child;
-    child.once("error", (error) => {
-      if (activeChild === child) activeChild = undefined;
-      reject(error);
-    });
-    child.once("close", (code, signal) => {
-      if (activeChild === child) activeChild = undefined;
-      resolve({ code, signal });
-    });
-  });
-}
-
-process.on("SIGINT", () => stop("SIGINT"));
-process.on("SIGTERM", () => stop("SIGTERM"));
-process.on("exit", cleanup);
-
-let exitCode = 0;
-try {
-  const migration = await runChild([
-    authCli,
-    "migrate",
-    "--config",
-    "server/auth-config.ts",
-    "--yes",
-  ]);
-  if (!stopping && migration.code !== 0) {
-    throw new Error(`Auth migration failed (${migration.code ?? migration.signal ?? "unknown"}).`);
-  }
-
-  if (!stopping) {
-    const build = await runChild([nextCli, "build"]);
-    if (!stopping && build.code !== 0) {
-      throw new Error(`Next build failed (${build.code ?? build.signal ?? "unknown"}).`);
-    }
-  }
-} catch (error) {
-  if (!stopping) {
-    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-    exitCode = 1;
-  }
-} finally {
-  cleanup();
-}
-
-process.exitCode = stopping ? interruptionExitCode : exitCode;
+// A build must not migrate or query any database. Port 1 is deliberately unused.
+const child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "build"], {
+  cwd: process.cwd(),
+  env: testEnvironment(
+    "postgresql://build:unused@127.0.0.1:1/creeper_build",
+    "http://127.0.0.1:3200",
+    "creeper_build_test",
+  ),
+  stdio: "inherit",
+});
+process.on("SIGINT", () => child.kill("SIGINT"));
+process.on("SIGTERM", () => child.kill("SIGTERM"));
+child.once("error", () => { process.exitCode = 1; });
+child.once("close", (code) => { process.exitCode = code ?? 1; });

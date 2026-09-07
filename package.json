@@ -10,10 +10,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "auth:migrate": "auth migrate --config server/auth-config.ts --yes",
+    "auth:generate": "node --conditions=react-server scripts/auth-schema.mjs",
+    "auth:migrate": "pnpm db:migrate",
+    "db:up": "docker compose up -d --wait db",
+    "db:stop": "docker compose stop db",
+    "db:test:up": "docker compose --profile test up -d --wait db-test",
+    "db:test:stop": "docker compose --profile test stop db-test",
+    "db:generate": "drizzle-kit generate",
+    "db:check": "drizzle-kit check",
+    "db:migrate": "tsx scripts/db-migrate.ts",
+    "test:db": "tsx --test tests/database.test.ts",
     "check:architecture": "node scripts/check-architecture.mjs",
     "check:secrets": "node scripts/check-secrets.mjs",
-    "test": "node tests/support/build-test-app.mjs && node --test tests/app.test.mjs",
+    "test": "pnpm test:db && node tests/support/build-test-app.mjs && node --test tests/app.test.mjs",
     "test:responsive": "playwright test",
     "test:responsive:list": "playwright test --list",
     "test:responsive:install": "playwright install chromium",
@@ -21,9 +30,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@better-auth/drizzle-adapter": "1.7.1",
+    "@next/env": "16.3.3",
     "better-auth": "1.7.1",
     "clsx": "2.1.1",
+    "drizzle-orm": "0.45.2",
     "next": "16.3.3",
+    "pg": "8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-qr-code": "2.2.0",
@@ -37,17 +50,25 @@
     "@playwright/test": "1.62.1",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "22.19.19",
+    "@types/pg": "8.23.1",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "auth": "1.7.1",
+    "drizzle-kit": "0.31.10",
     "eslint": "9.39.4",
     "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.1.1",
     "globals": "16.4.0",
     "tailwindcss": "4.3.3",
+    "tsx": "4.23.13",
     "typescript": "5.9.3",
     "typescript-eslint": "8.59.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "@esbuild-kit/core-utils>esbuild": "0.25.12"
+    }
   },
   "type": "module"
 }

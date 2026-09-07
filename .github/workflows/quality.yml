@@ -12,6 +12,22 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18.4-alpine
+        env:
+          POSTGRES_USER: creeper
+          POSTGRES_PASSWORD: creeper_ci_only
+          POSTGRES_DB: creeper_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U creeper -d creeper_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://creeper:creeper_ci_only@127.0.0.1:5432/creeper_test
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -25,6 +41,7 @@ jobs:
       - run: pnpm check:architecture
       - run: pnpm check:secrets
       - run: pnpm typecheck
+      - run: pnpm db:check
       - run: pnpm test
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:responsive

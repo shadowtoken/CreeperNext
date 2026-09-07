@@ -4,7 +4,7 @@
 
 ## 快速启动
 
-需要 Node.js `>=22.19.0` 和 pnpm `10.33.x`。
+需要 Node.js `>=22.19.0`、pnpm `10.33.x` 和 PostgreSQL。下面使用 Docker Compose 启动本地 PostgreSQL 18；已有 PostgreSQL 时也可以直接配置连接。
 
 ```bash
 pnpm install
@@ -12,14 +12,17 @@ cp .env.example .env.local
 openssl rand -base64 32
 ```
 
-把生成值填入 `BETTER_AUTH_SECRET`，将 `AUTH_DB_PATH` 改为本机绝对路径，然后执行：
+把生成值填入 `BETTER_AUTH_SECRET`。示例 `DATABASE_URL` 已对应本地 Compose，然后执行：
 
 ```bash
-pnpm auth:migrate
+pnpm db:up
+pnpm db:migrate
 pnpm dev
 ```
 
-默认访问 [http://localhost:3000](http://localhost:3000)。改用 3100 端口时，需要同时修改 `SITE_URL` 和 `BETTER_AUTH_URL`。
+默认访问 [http://localhost:3000](http://localhost:3000)。改用 3100 端口时，需要同时修改 `SITE_URL` 和 `BETTER_AUTH_URL`，运行 `pnpm dev --port 3100`。数据库默认只监听 `127.0.0.1:55432`；`pnpm db:stop` 停止数据库但保留数据卷。
+
+从旧版 SQLite 升级：新增 PostgreSQL 配置后使用的是一套新数据库，旧账户不会自动出现。原 SQLite 文件保留，不再由应用打开。保留旧用户的迁移注意事项见 [数据库与全栈规范](docs/database.md#从-sqlite-升级)。
 
 ## 环境变量
 
@@ -32,12 +35,15 @@ pnpm dev
 | `BETTER_AUTH_ALLOWED_HOSTS` | 动态 Base URL 的精确 Host 白名单 |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | 可选的额外浏览器 Origin 白名单 |
 | `AUTH_COOKIE_PREFIX` | 当前应用独有的 Cookie 前缀 |
-| `AUTH_DB_PATH` | SQLite 绝对路径；生产环境强制要求 |
+| `DATABASE_URL` | 认证和业务共用的 PostgreSQL 连接，仅服务端读取 |
+| `DATABASE_DIRECT_URL` | 可选；迁移专用直连地址，未填则使用 `DATABASE_URL` |
+| `DATABASE_POOL_MAX` | 每个 Node 进程的连接池上限，默认 5 |
+| `TEST_DATABASE_URL` | 独立测试服务器，数据库名须以 `_test` 结尾；仅测试使用 |
 | `NEXT_ALLOWED_DEV_ORIGINS` | 仅开发期允许加载 Dev Assets 的额外 hostname |
 
-生产环境会 fail-fast：缺少 `SITE_URL`、认证密钥、认证 URL、Cookie 前缀或数据库路径时拒绝启动。URL 必须是没有 credentials、path、query 和 hash 的 HTTP(S) Origin。生产环境不自动信任 localhost。
+生产环境会 fail-fast：缺少 `SITE_URL`、认证密钥、认证 URL、Cookie 前缀或 PostgreSQL 连接时拒绝启动。站点/认证 URL 必须是没有 credentials、path、query 和 hash 的 HTTP(S) Origin；数据库 URL 单独校验。生产环境不自动信任 localhost。
 
-`.env.local`、SQLite/WAL/SHM 和构建产物均被 Git 忽略。共享机器上的 `.env.local` 与数据库文件建议使用 `0600` 权限；正式部署使用 Secret Manager。当前 Node SQLite 只适合本地开发或带持久卷的单实例 Node，不适合临时文件系统、无状态 Serverless 或多副本写入。
+`.env.local`、旧 SQLite/WAL/SHM 和构建产物均被 Git 忽略。共享机器上的 `.env.local` 建议使用 `0600` 权限；正式部署使用 Secret Manager。Compose 的公开密码仅供本地开发，生产使用独立凭据和供应商要求的 TLS 配置。迁移在发布流程中显式执行，不随应用启动自动执行。多副本/Serverless 需要按实例数限制总连接数，详见 [数据库与全栈规范](docs/database.md)。
 
 ### 多项目本地登录隔离
 
@@ -71,10 +77,18 @@ CreeperNext/
 │   ├── api/auth/client.ts            # Better Auth 浏览器 transport adapter
 │   └── ws/                           # 有实时业务后再实现
 ├── server/
-│   ├── auth-config.ts                # Better Auth、SQLite 和安全 Hook
-│   └── auth.ts                       # 服务端 Session/MFA 门禁
+│   ├── auth-config.ts                # Better Auth、Drizzle 适配器和安全 Hook
+│   ├── auth.ts                       # 服务端 Session/MFA 门禁
+│   └── db/
+│       ├── client.ts                 # server-only、连接池与 Drizzle 实例
+│       └── schema/auth.ts            # Better Auth 生成的认证表与关联
+├── drizzle/                          # 可审查 SQL 迁移及其版本快照
+├── drizzle.config.ts                 # Schema/迁移文件配置
+├── compose.yaml                      # 本地开发库和独立测试库
 ├── config/
 │   ├── env.ts                        # 服务端公开 Origin 校验
+│   ├── auth.ts                       # 认证环境变量解析
+│   ├── database.ts                   # 数据库连接、连接池配置校验
 │   └── site.ts                       # 非敏感品牌配置
 ├── styles/                           # Token → Adapter → Foundation
 ├── types/                            # 有真实 DTO/领域模型后按域创建
@@ -106,7 +120,7 @@ Feature Client Component
   → /api/auth/*
   → app/api/auth/[...all]/route.ts
   → server/auth-config.ts
-  → SQLite
+  → Drizzle → PostgreSQL
 ```
 
 Server Component 不走 HTTP：
@@ -115,7 +129,7 @@ Server Component 不走 HTTP：
 Page / Layout
   → server/auth.ts
   → Better Auth Server API
-  → SQLite
+  → Drizzle → PostgreSQL
 ```
 
 `app/(protected)` 是 Route Group，不会进入 URL。目录名本身没有权限能力；真正门禁来自其 Layout 的服务端检查，私有数据、Server Action 和 Route Handler 仍需在数据边界再次授权。
@@ -143,10 +157,13 @@ session.mfaVerifiedAt != null
 
 本产品默认不提供恢复码、可信设备绕过、导出 TOTP 密钥或关闭 2FA；对应 HTTP 端点均被硬禁用。动态代码连续失败五次会触发账户级临时锁定。升级 Better Auth 前应复核官方 [Two-Factor Authentication](https://better-auth.com/docs/plugins/2fa) 和 [Trusted Origins](https://better-auth.com/docs/reference/options) 协议，并重跑完整测试。
 
-认证插件或数据库字段变化后执行：
+认证插件或认证字段变化后生成 Schema，再审查差异和迁移 SQL：
 
 ```bash
-pnpm auth:migrate
+pnpm auth:generate
+pnpm db:generate
+# 审查 drizzle/*.sql 后
+pnpm db:migrate
 ```
 
 ## 视觉与响应式
@@ -170,10 +187,12 @@ Primitive Tokens
 ## 质量门禁
 
 ```bash
+pnpm db:test:up              # 首次先启动独立 PostgreSQL 测试服务器
 pnpm lint
 pnpm check:architecture
 pnpm check:secrets
 pnpm typecheck
+pnpm db:check
 pnpm build
 pnpm test
 pnpm test:responsive:install   # 首次执行
@@ -182,8 +201,8 @@ pnpm audit --prod
 git diff --check
 ```
 
-`pnpm test` 使用生产构建和隔离数据库验证路由、Origin、真实注册登录、强制 TOTP、双浏览器旧 Session、敏感认证 API、恢复码端点禁用、开放重定向和安全响应头。
+测试从 `.env.local` 或进程环境读取显式的 `TEST_DATABASE_URL`，不回退到应用数据库。`pnpm test` 先验证真实 PostgreSQL 的迁移幂等性、唯一约束、外键、级联删除与事务回滚，再用生产构建验证路由、Origin、真实注册登录、强制 TOTP、双浏览器旧 Session、敏感认证 API、恢复码端点禁用、开放重定向和安全响应头。每个测试套件创建随机数据库，退出时只删除自己创建的数据库。构建使用不可连接的占位 URL 验证 build 不依赖数据库在线。
 
 `pnpm test:responsive` 在 Chromium 多视口验证 Landing、认证、Account、404、边界上下 1px、横向溢出、内容裁切、44×44 触控目标、200% 文本、Reduced Motion、Light/Dark 对比度和 Axe。
 
-GitHub Actions 会依次执行依赖审计、Lint、架构边界、TypeScript、生产 HTTP 测试和浏览器门禁。自动化不能替代发布前的键盘、VoiceOver、真实浏览器 Zoom 与真机 Safe Area 检查。
+GitHub Actions 使用 PostgreSQL service 执行依赖审计、Lint、架构边界、TypeScript、迁移检查、生产 HTTP 测试和浏览器门禁。本地测试结束可用 `pnpm db:test:stop` 停止测试数据库。自动化不能替代发布前的键盘、VoiceOver、真实浏览器 Zoom 与真机 Safe Area 检查。

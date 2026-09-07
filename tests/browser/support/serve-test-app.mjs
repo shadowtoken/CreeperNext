@@ -1,93 +1,37 @@
 import { spawn } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
+import { createTestDatabase, testEnvironment } from "../../support/database.mjs";
 
-const cwd = process.cwd();
 const port = process.env.CREEPER_E2E_PORT ?? "3211";
-const temporaryDirectory = mkdtempSync(path.join(tmpdir(), "creeper-browser-"));
-const databasePath = path.join(temporaryDirectory, "auth.sqlite");
-const environment = { ...process.env, AUTH_DB_PATH: databasePath };
-const authCli = path.join(cwd, "node_modules/auth/dist/index.mjs");
-const nextCli = path.join(cwd, "node_modules/next/dist/bin/next");
-
-let activeChild;
-let cleaned = false;
+let child;
 let stopping = false;
 
-function cleanup() {
-  if (cleaned) return;
-  cleaned = true;
-  rmSync(temporaryDirectory, { force: true, recursive: true });
-}
-
-function stop(signal = "SIGTERM") {
-  if (stopping) return;
-  stopping = true;
-  if (activeChild?.exitCode === null) activeChild.kill(signal);
-}
-
-function runChild(args) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, args, {
-      cwd,
-      env: environment,
-      stdio: "inherit",
-    });
-    activeChild = child;
-    child.once("error", (error) => {
-      if (activeChild === child) activeChild = undefined;
-      reject(error);
-    });
-    child.once("close", (code, signal) => {
-      if (activeChild === child) activeChild = undefined;
-      resolve({ code, signal });
-    });
+for (const signal of ["SIGINT", "SIGTERM"]) {
+  process.on(signal, () => {
+    stopping = true;
+    child?.kill(signal);
   });
 }
 
-process.on("SIGINT", () => stop("SIGINT"));
-process.on("SIGTERM", () => stop("SIGTERM"));
-process.on("exit", cleanup);
+const database = await createTestDatabase();
+const environment = testEnvironment(database.url, `http://127.0.0.1:${port}`, "creeper_browser_test");
 
-let exitCode = 0;
-try {
-  const migration = await runChild([
-    authCli,
-    "migrate",
-    "--config",
-    "server/auth-config.ts",
-    "--yes",
-  ]);
-  if (!stopping && migration.code !== 0) {
-    throw new Error(`Auth migration failed (${migration.code ?? migration.signal ?? "unknown"}).`);
-  }
-
-  if (!stopping) {
-    const build = await runChild([nextCli, "build"]);
-    if (!stopping && build.code !== 0) {
-      throw new Error(`Next build failed (${build.code ?? build.signal ?? "unknown"}).`);
-    }
-  }
-
-  if (!stopping) {
-    const server = await runChild([
-      nextCli,
-      "start",
-      "--hostname",
-      "127.0.0.1",
-      "--port",
-      port,
-    ]);
-    if (!stopping) exitCode = server.code ?? 1;
-  }
-} catch (error) {
-  if (!stopping) {
-    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-    exitCode = 1;
-  }
-} finally {
-  cleanup();
+function run(args) {
+  return new Promise((resolve, reject) => {
+    child = spawn(process.execPath, ["node_modules/next/dist/bin/next", ...args], {
+      cwd: process.cwd(), env: environment, stdio: "inherit",
+    });
+    child.once("error", reject);
+    child.once("close", (code) => resolve(code ?? 1));
+  });
 }
 
-process.exitCode = stopping ? 0 : exitCode;
+try {
+  const buildCode = stopping ? 1 : await run(["build"]);
+  if (!stopping && buildCode !== 0) throw new Error("Browser test build failed.");
+  if (!stopping) {
+    process.exitCode = await run(["start", "--hostname", "127.0.0.1", "--port", port]);
+  }
+} finally {
+  await database.dispose();
+  if (stopping) process.exitCode = 0;
+}

@@ -1,36 +1,23 @@
 import assert from "node:assert/strict";
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { createHmac } from "node:crypto";
-import { rm } from "node:fs/promises";
-import path from "node:path";
 import test, { after, before } from "node:test";
+import { createTestDatabase, stopChild, testEnvironment } from "./support/database.mjs";
 
 const port = 3200 + (process.pid % 400);
 const origin = `http://127.0.0.1:${port}`;
 const localhostOrigin = `http://localhost:${port}`;
 const trustedClientOrigin = "https://trusted-client.example";
 const authCookiePrefix = `creeper_test_${process.pid}`;
-const databasePath = path.join(process.cwd(), `.creeper-next-test-${process.pid}.sqlite`);
-const environment = {
-  ...process.env,
-  AUTH_DB_PATH: databasePath,
-  BETTER_AUTH_SECRET: "creeper-next-test-secret-at-least-thirty-two-characters",
-  BETTER_AUTH_URL: origin,
-  BETTER_AUTH_ALLOWED_HOSTS: "localhost:*,127.0.0.1:*",
-  BETTER_AUTH_TRUSTED_ORIGINS: `${trustedClientOrigin}/frontend?source=test`,
-  AUTH_COOKIE_PREFIX: authCookiePrefix,
-  SITE_URL: origin,
-};
-
 let server;
+let database;
 
 before(async () => {
-  const migration = spawnSync(
-    path.join(process.cwd(), "node_modules/.bin/auth"),
-    ["migrate", "--config", "server/auth-config.ts", "--yes"],
-    { cwd: process.cwd(), env: environment, encoding: "utf8" },
-  );
-  assert.equal(migration.status, 0, migration.stderr || migration.stdout);
+  database = await createTestDatabase();
+  const environment = {
+    ...testEnvironment(database.url, origin, authCookiePrefix),
+    BETTER_AUTH_TRUSTED_ORIGINS: `${trustedClientOrigin}/frontend?source=test`,
+  };
 
   server = spawn(
     process.execPath,
@@ -53,12 +40,8 @@ before(async () => {
 });
 
 after(async () => {
-  if (server && !server.killed) server.kill("SIGTERM");
-  await Promise.all([
-    rm(databasePath, { force: true }),
-    rm(`${databasePath}-shm`, { force: true }),
-    rm(`${databasePath}-wal`, { force: true }),
-  ]);
+  await stopChild(server);
+  await database?.dispose();
 });
 
 test("renders the static CreeperNext landing and metadata", async () => {
