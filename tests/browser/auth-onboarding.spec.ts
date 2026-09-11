@@ -12,7 +12,7 @@ test("registration is gated by the complete MFA enrollment flow", async ({ page 
   await page.getByLabel("称呼").fill("安全设置测试");
   await page.getByLabel("邮箱").fill(email);
   await page.getByLabel("密码", { exact: true }).fill(password);
-  await page.getByLabel("确认密码").fill(password);
+  await page.getByLabel("确认密码", { exact: true }).fill(password);
   await page.getByRole("button", { name: "创建账户" }).click();
   await expect(page).toHaveURL(/\/login\?registered=1&returnTo=%2Faccount$/);
   await expect(page.getByText("账户已创建；登录后继续绑定身份验证器。")).toBeVisible();
@@ -56,6 +56,19 @@ test("registration is gated by the complete MFA enrollment flow", async ({ page 
   await expectResponsiveLayout(page);
   await expectTouchTargets(page);
   await expectNoAxeViolations(page);
+
+  await page.getByRole("button", { name: "退出登录", exact: true }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await page.goto("/account");
+  await expect(page).toHaveURL(/\/login\?returnTo=%2Faccount$/);
+  await page.getByLabel("邮箱", { exact: true }).fill(email);
+  await page.getByLabel("密码", { exact: true }).fill(updatedPassword);
+  await page.getByRole("button", { name: "登录", exact: true }).click();
+  await expect(page).toHaveURL(/\/two-factor\?returnTo=%2Faccount$/);
+  await page.getByLabel("身份验证器 6 位代码", { exact: true }).fill(currentTotp(secret!));
+  await page.getByRole("button", { name: "验证并登录", exact: true }).click();
+  await expect(page).toHaveURL(/\/account$/);
+  await expect(page.getByRole("heading", { name: "账户与安全", exact: true })).toBeVisible();
 });
 
 async function expectSetupGeometry(page: import("@playwright/test").Page) {

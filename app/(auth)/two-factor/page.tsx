@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AuthShell, TwoFactorChallengeForm } from "@/features/auth";
+import { AuthShell, TwoFactorChallengeForm } from "@/features/auth/two-factor";
 import { AUTH_PATHS, safeReturnPath } from "@/core/auth/paths";
 import { getSession } from "@/server/auth";
 
@@ -23,8 +23,7 @@ export default async function TwoFactorPage({
 
   return (
     <AuthShell
-      eyebrow="SECURITY CHECK"
-      title="再确认一次是你"
+      title="身份验证"
       description="打开身份验证器并输入当前 6 位代码。"
       footer={<>验证请求有问题？<Link href={`${AUTH_PATHS.login}?returnTo=${encodeURIComponent(returnTo)}`}>重新登录</Link></>}
     >

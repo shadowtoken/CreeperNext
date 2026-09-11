@@ -1,6 +1,22 @@
 /* Raw values. Product and page CSS should consume semantic aliases instead. */
 :root {
   --ref-color-white: #ffffff;
+  --ref-color-copper-100: #f2e4dc;
+  --ref-color-copper-300: #e6bfa9;
+  --ref-color-copper-700: #914a2e;
+  --ref-color-ink-25: #fafafa;
+  --ref-color-ink-50: #f3f3f2;
+  --ref-color-ink-100: #e9e9e7;
+  --ref-color-ink-200: #d7d7d4;
+  --ref-color-ink-400: #91918c;
+  --ref-color-ink-500: #666661;
+  --ref-color-ink-600: #50504c;
+  --ref-color-ink-800: #30302e;
+  --ref-color-ink-950: #1c1c1a;
+  --ref-color-blue-100: #dce6ff;
+  --ref-color-blue-300: #a4c0ff;
+  --ref-color-blue-600: #2854e8;
+  --ref-color-blue-700: #2044bf;
   --ref-color-stone-0: #fbfaf7;
   --ref-color-stone-50: #f7f7f2;
   --ref-color-stone-100: #f4f2ed;

@@ -35,6 +35,7 @@
 
   --spacing-page-safe: var(--space-page-gutter-inline-safe);
   --spacing-target: var(--size-target-min);
+  --spacing-control-comfortable: var(--size-control-comfortable);
   --container-content: var(--size-content-max);
   --container-wide: var(--size-content-wide);
   --container-reading: var(--size-content-reading);

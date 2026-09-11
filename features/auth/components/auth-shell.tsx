@@ -1,19 +1,16 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Brand } from "@/components/shared/brand";
-import { Kicker } from "@/components/ui/kicker";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/cn";
 import styles from "./auth-shell.module.css";
 
 export function AuthShell({
-  eyebrow,
   title,
   description,
   children,
   footer,
 }: {
-  eyebrow: string;
   title: string;
   description: string;
   children: ReactNode;
@@ -27,23 +24,25 @@ export function AuthShell({
         </Link>
         <Link className={styles.back} href="/">
           返回官网
-          <span aria-hidden="true">↗</span>
         </Link>
       </header>
       <main className={styles.main} id="main-content" tabIndex={-1}>
-        <section
-          className={cn(styles.card, "@container/auth-card")}
-          data-auth-card
-          aria-labelledby="auth-title"
-        >
-          <div className={styles.intro}>
-            <Kicker className={styles.eyebrow}>{eyebrow}</Kicker>
-            <h1 id="auth-title">{title}</h1>
-            <p className={styles.description}>{description}</p>
+        <div className={styles.composition}>
+          <div className={styles.taskPane} data-auth-task-pane>
+            <section
+              className={cn(styles.card, "@container/auth-card")}
+              data-auth-card
+              aria-labelledby="auth-title"
+            >
+              <div className={styles.intro}>
+                <h1 id="auth-title">{title}</h1>
+                <p className={styles.description}>{description}</p>
+              </div>
+              <div className={styles.action} data-auth-form-region>{children}</div>
+              <div className={styles.switch}>{footer}</div>
+            </section>
           </div>
-          <div className={styles.action} data-auth-form-region>{children}</div>
-          <div className={styles.switch}>{footer}</div>
-        </section>
+        </div>
       </main>
     </div>
   );

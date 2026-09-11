@@ -16,7 +16,7 @@ before(async () => {
   database = await createTestDatabase();
   const environment = {
     ...testEnvironment(database.url, origin, authCookiePrefix),
-    BETTER_AUTH_TRUSTED_ORIGINS: `${trustedClientOrigin}/frontend?source=test`,
+    BETTER_AUTH_TRUSTED_ORIGINS: trustedClientOrigin,
   };
 
   server = spawn(
@@ -48,8 +48,12 @@ test("renders the static CreeperNext landing and metadata", async () => {
   const response = await fetch(origin);
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /从一个好地基/);
-  assert.match(html, /轻量，但不简陋/);
+  assert.match(html, /CreeperNext/);
+  assert.match(html, /id="principles"/);
+  assert.match(html, /id="structure"/);
+  assert.match(html, /href="\/register"/);
+  assert.match(html, /href="\/login"/);
+  assert.doesNotMatch(html, /data-size="display"/);
   assert.match(html, /property="og:image"/);
   assert.doesNotMatch(html, /codex-preview|SkeletonPreview|vinext/i);
 });
@@ -72,7 +76,7 @@ test("renders auth entry points without accepting an external return URL", async
   assert.match(loginHtml, /欢迎回来/);
   assert.match(loginHtml, /\\"returnTo\\":\\"\/account\\"/);
   assert.match(registerHtml, /创建账户/);
-  assert.match(twoFactorHtml, /再确认一次是你/);
+  assert.match(twoFactorHtml, /身份验证/);
   assert.match(twoFactorHtml, /\\"returnTo\\":\\"\/account\\"/);
 
   const setup = await fetch(`${origin}/two-factor/setup?returnTo=https://evil.example/steal`, {
@@ -328,7 +332,7 @@ test("renders the branded not-found boundary and security headers", async () => 
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
   assert.equal(response.headers.get("x-frame-options"), "DENY");
   assert.match(response.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/);
-  assert.match(await response.text(), /这里还没有盖房子/);
+  assert.match(await response.text(), /页面不存在/);
 });
 
 test("publishes only the public landing in robots and sitemap", async () => {

@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   metadataBase: getSiteUrl(),
   title: { default: siteConfig.name, template: `%s · ${siteConfig.name}` },
   description: siteConfig.description,
+  icons: { icon: { url: "/brand/cr-solid.png", type: "image/png" } },
   openGraph: {
     type: "website",
     title: `${siteConfig.name} — 现代 Next.js 起点`,

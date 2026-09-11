@@ -44,6 +44,7 @@ export function additionalTrustedOrigins(fallback: string): string[] {
         candidate.includes("*") ||
         url.username ||
         url.password ||
+        url.pathname !== "/" || url.search || url.hash ||
         url.origin === "null"
       ) {
         throw new Error("invalid origin");
@@ -51,7 +52,7 @@ export function additionalTrustedOrigins(fallback: string): string[] {
       return url.origin;
     } catch {
       throw new Error(
-        `BETTER_AUTH_TRUSTED_ORIGINS contains an invalid http(s) URL: ${candidate}`,
+        "BETTER_AUTH_TRUSTED_ORIGINS must contain exact http(s) origins without credentials, paths, query, hash or wildcards.",
       );
     }
   });
@@ -88,13 +89,13 @@ export function baseURLProtocol(fallback: string): "http" | "https" | "auto" {
 
 function normalizeAllowedHost(candidate: string): string {
   if (!candidate || candidate.includes("://") || /[/?#@]/.test(candidate)) {
-    throw new Error(`BETTER_AUTH_ALLOWED_HOSTS contains an invalid host: ${candidate || "<empty>"}`);
+    throw new Error("BETTER_AUTH_ALLOWED_HOSTS must contain hosts without schemes, credentials or paths.");
   }
 
   const portWildcard = candidate.endsWith(":*");
   const hostValue = portWildcard ? candidate.slice(0, -2) : candidate;
   if (hostValue.includes("*")) {
-    throw new Error(`BETTER_AUTH_ALLOWED_HOSTS contains an unsupported wildcard: ${candidate}`);
+    throw new Error("BETTER_AUTH_ALLOWED_HOSTS only supports a port wildcard (:*), not host wildcards.");
   }
 
   try {
@@ -110,7 +111,7 @@ function normalizeAllowedHost(candidate: string): string {
 
     return portWildcard ? `${url.hostname.toLowerCase()}:*` : url.host.toLowerCase();
   } catch {
-    throw new Error(`BETTER_AUTH_ALLOWED_HOSTS contains an invalid host: ${candidate}`);
+    throw new Error("BETTER_AUTH_ALLOWED_HOSTS contains an invalid host or port.");
   }
 }
 

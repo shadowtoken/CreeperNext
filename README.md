@@ -7,20 +7,23 @@
 需要 Node.js `>=22.19.0`、pnpm `10.33.x` 和 PostgreSQL。下面使用 Docker Compose 启动本地 PostgreSQL 18；已有 PostgreSQL 时也可以直接配置连接。
 
 ```bash
-pnpm install
-cp .env.example .env.local
-openssl rand -base64 32
+pnpm install --frozen-lockfile
+pnpm setup:local
+pnpm check:env
 ```
 
-把生成值填入 `BETTER_AUTH_SECRET`。示例 `DATABASE_URL` 已对应本地 Compose，然后执行：
+`setup:local` 安全创建 `.env.local`，自动生成认证密钥和独立 Cookie 前缀，不覆盖已有文件、不打印密钥。示例 `DATABASE_URL` 已对应本地 Compose，然后执行：
 
 ```bash
 pnpm db:up
 pnpm db:migrate
+pnpm check:env --database
 pnpm dev
 ```
 
 默认访问 [http://localhost:3000](http://localhost:3000)。改用 3100 端口时，需要同时修改 `SITE_URL` 和 `BETTER_AUTH_URL`，运行 `pnpm dev --port 3100`。数据库默认只监听 `127.0.0.1:55432`；`pnpm db:stop` 停止数据库但保留数据卷。
+
+首次初始化也可用 `pnpm setup:local --port 3100`。已有配置再次 setup:local 不会改端口或轮换密钥。环境加载顺序、只读诊断和常见启动问题见 [配置与首次启动](docs/getting-started.md)。
 
 从旧版 SQLite 升级：新增 PostgreSQL 配置后使用的是一套新数据库，旧账户不会自动出现。原 SQLite 文件保留，不再由应用打开。保留旧用户的迁移注意事项见 [数据库与全栈规范](docs/database.md#从-sqlite-升级)。
 
@@ -43,6 +46,8 @@ pnpm dev
 
 生产环境会 fail-fast：缺少 `SITE_URL`、认证密钥、认证 URL、Cookie 前缀或 PostgreSQL 连接时拒绝启动。站点/认证 URL 必须是没有 credentials、path、query 和 hash 的 HTTP(S) Origin；数据库 URL 单独校验。生产环境不自动信任 localhost。
 
+`dev/build/start` 加载 Next 配置时集中检查配置，检查本身不连接数据库。`pnpm check:env` 可单独诊断，`--production` 按生产环境加载，`--database` 才额外只读检查连接和基础认证表，不会自动迁移。
+
 `.env.local`、旧 SQLite/WAL/SHM 和构建产物均被 Git 忽略。共享机器上的 `.env.local` 建议使用 `0600` 权限；正式部署使用 Secret Manager。Compose 的公开密码仅供本地开发，生产使用独立凭据和供应商要求的 TLS 配置。迁移在发布流程中显式执行，不随应用启动自动执行。多副本/Serverless 需要按实例数限制总连接数，详见 [数据库与全栈规范](docs/database.md)。
 
 ### 多项目本地登录隔离
@@ -63,16 +68,18 @@ CreeperNext/
 │   └── page.tsx                      # Landing 页面组装
 ├── components/
 │   ├── ui/                           # Button、Kicker 等基础 UI 原子
-│   └── shared/                       # 真正跨 Feature 的 Brand
+│   └── shared/                       # 跨场景 Brand、ContentState
 ├── features/
 │   ├── auth/
 │   │   ├── components/               # 登录、注册、TOTP、改密与安全设置
-│   │   └── index.ts                  # 认证 Feature 公开入口
+│   │   ├── login.ts / register.ts    # 登录/注册的独立服务端组合入口
+│   │   └── two-factor.ts / setup.ts / account.ts
 │   └── marketing/
 │       ├── components/               # Landing Header、Footer 与预览构图
 │       └── index.ts
 ├── core/
 │   └── auth/                         # 与框架无关的路径和认证策略
+├── lib/                              # 无业务语义的纯工具，例如 cn
 ├── services/
 │   ├── api/auth/client.ts            # Better Auth 浏览器 transport adapter
 │   └── ws/                           # 有实时业务后再实现
@@ -87,6 +94,8 @@ CreeperNext/
 ├── compose.yaml                      # 本地开发库和独立测试库
 ├── config/
 │   ├── env.ts                        # 服务端公开 Origin 校验
+│   ├── runtime.ts                    # Next/CLI 共用的服务端 Origin 解析
+│   ├── validation.ts                 # 启动与 doctor 共用的配置检查
 │   ├── auth.ts                       # 认证环境变量解析
 │   ├── database.ts                   # 数据库连接、连接池配置校验
 │   └── site.ts                       # 非敏感品牌配置
@@ -94,7 +103,7 @@ CreeperNext/
 ├── types/                            # 有真实 DTO/领域模型后按域创建
 ├── hooks/                            # 仅放真正跨域的客户端 Hook
 ├── tests/                            # HTTP、安全、响应式与 Axe
-└── scripts/check-architecture.mjs    # Env 与目录边界门禁
+└── scripts/check-architecture.mjs    # TypeScript 依赖图、运行环境与 Env 门禁
 ```
 
 目录约束：
@@ -102,13 +111,13 @@ CreeperNext/
 - `app` 保持薄，只负责 Metadata、服务端门禁和页面组合。
 - `components/ui` 不依赖 Feature、Service 或 Server。
 - `components/shared` 只收纳真正跨多个 Feature 的组件。
-- `features/<domain>` 通过 `index.ts` 暴露能力，`components/`、`lib/` 按需创建。
+- `features/<domain>` 通过域根的显式入口暴露能力；交互场景使用 `login.ts` 这样的窄入口，纯能力可保留 `index.ts`。`components/`、`lib/` 是域内实现，外部不能直接引用。
 - `services/api/<domain>` 对应后端业务域的 transport adapter；不要在组件中拼接 API URL。
 - `core` 不依赖 React、Next 或 Feature。
 - Server Component 直接调用服务端模块，不通过 HTTP 请求本应用 `/api`。
 - `use client` 只放在需要状态、事件或浏览器 API 的交互叶子。
 
-ESLint 和 `pnpm check:architecture` 会自动阻止主要的反向依赖、根 `components` 杂物和散落的环境变量读取。
+ESLint 提供基础即时提示；`pnpm check:architecture` 用 TypeScript 解析实际依赖，统一检查别名/相对路径、Feature 私有实现、运行时循环、客户端间接引用服务端代码，以及环境配置。新增功能的目录、公开入口、查询和 Server Action 范式见 [工程边界规范](docs/architecture.md)。
 
 ## 认证边界
 
@@ -182,6 +191,8 @@ Primitive Tokens
 
 320、390、568 横屏、768、1024、1280×800、1440 和 1920 是验收样本，不是设备分支。详细规范见 [视觉系统](docs/visual-system.md) 和 [响应式设计](docs/responsive-design.md)。
 
+加载、空内容、错误、提交中与成功反馈遵循 [页面状态规范](docs/page-states.md)。基础 Button 统一 pending 语义，Feedback 统一原地反馈，ContentState 提供区域状态展示；业务层拥有请求和重试逻辑。
+
 第三方 shadcn/Registry 组件先使用 `view`、`--dry-run` 和 `--diff` 审核，再复制为本地源码并适配 Token、RSC、键盘、H5、Reduced Motion 和许可证。完整页面 Block 不使用 `--overwrite` 盲装。
 
 ## 质量门禁
@@ -190,6 +201,9 @@ Primitive Tokens
 pnpm db:test:up              # 首次先启动独立 PostgreSQL 测试服务器
 pnpm lint
 pnpm check:architecture
+pnpm test:architecture
+pnpm test:config
+pnpm test:auth-ui
 pnpm check:secrets
 pnpm typecheck
 pnpm db:check
@@ -201,7 +215,7 @@ pnpm audit --prod
 git diff --check
 ```
 
-测试从 `.env.local` 或进程环境读取显式的 `TEST_DATABASE_URL`，不回退到应用数据库。`pnpm test` 先验证真实 PostgreSQL 的迁移幂等性、唯一约束、外键、级联删除与事务回滚，再用生产构建验证路由、Origin、真实注册登录、强制 TOTP、双浏览器旧 Session、敏感认证 API、恢复码端点禁用、开放重定向和安全响应头。每个测试套件创建随机数据库，退出时只删除自己创建的数据库。构建使用不可连接的占位 URL 验证 build 不依赖数据库在线。
+测试从 `.env.local` 或进程环境读取显式的 `TEST_DATABASE_URL`，不回退到应用数据库。`pnpm test` 包含初始化与配置诊断回归、架构规则回归、真实 PostgreSQL 约束/事务/迁移验证、生产构建、认证页面客户端入口隔离，以及 HTTP 注册登录、强制 TOTP、旧 Session、禁用端点、Origin、开放重定向与安全响应头。每个数据库测试套件创建随机数据库，退出时只删除自己创建的数据库。构建使用不可连接的占位 URL 验证 build 不依赖数据库在线。
 
 `pnpm test:responsive` 在 Chromium 多视口验证 Landing、认证、Account、404、边界上下 1px、横向溢出、内容裁切、44×44 触控目标、200% 文本、Reduced Motion、Light/Dark 对比度和 Axe。
 

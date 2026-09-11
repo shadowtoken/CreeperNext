@@ -1,4 +1,8 @@
 import type { NextConfig } from "next";
+import { developmentOrigins } from "./config/runtime";
+import { assertConfiguration } from "./config/validation";
+
+assertConfiguration();
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: developmentOrigins(),
@@ -25,15 +29,6 @@ const nextConfig: NextConfig = {
   },
 };
 
-function developmentOrigins(): string[] {
-  const value = process.env.NEXT_ALLOWED_DEV_ORIGINS?.trim();
-  const entries = value
-    ? value.split(",").map((entry) => entry.trim())
-    : ["127.0.0.1", "creeper.localhost"];
-
-  return [...new Set(entries.map(normalizeDevelopmentOrigin))];
-}
-
 function contentSecurityPolicy(): string {
   return [
     "default-src 'self'",
@@ -47,33 +42,6 @@ function contentSecurityPolicy(): string {
     "script-src 'self' 'unsafe-inline'",
     "style-src 'self' 'unsafe-inline'",
   ].join("; ");
-}
-
-function normalizeDevelopmentOrigin(candidate: string): string {
-  if (!candidate || candidate.includes("://") || candidate.includes("*")) {
-    throw new Error(
-      `NEXT_ALLOWED_DEV_ORIGINS contains an invalid explicit hostname: ${candidate || "<empty>"}`,
-    );
-  }
-
-  try {
-    const url = new URL(`http://${candidate}`);
-    if (
-      !url.hostname
-      || url.username
-      || url.password
-      || url.port
-      || url.pathname !== "/"
-      || url.search
-      || url.hash
-    ) {
-      throw new Error("invalid hostname");
-    }
-
-    return url.hostname.toLowerCase();
-  } catch {
-    throw new Error(`NEXT_ALLOWED_DEV_ORIGINS contains an invalid explicit hostname: ${candidate}`);
-  }
 }
 
 export default nextConfig;

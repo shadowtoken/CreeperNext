@@ -8,13 +8,7 @@
     padding-block-end: max(var(--setup-gutter), env(safe-area-inset-bottom));
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
-    background:
-      radial-gradient(
-        circle at 50% -10rem,
-        color-mix(in srgb, var(--color-action-accent) 24%, transparent),
-        transparent min(42rem, 92vw)
-      ),
-      var(--color-bg-canvas);
+    background: var(--color-bg-canvas);
   }
 
   .header {
@@ -48,11 +42,9 @@
     min-width: 0;
     padding: clamp(2rem, 5vw, 3.5rem);
     border: 1px solid var(--color-border-subtle);
-    border-radius: clamp(1.25rem, 3vw, 1.75rem);
+    border-radius: 1rem;
     background: color-mix(in srgb, var(--color-surface-raised) 95%, transparent);
-    box-shadow:
-      0 1px 0 color-mix(in srgb, var(--color-surface-raised) 92%, transparent) inset,
-      var(--ds-shadow-raised);
+    box-shadow: none;
     container: security-setup / inline-size;
   }
 }

@@ -6,21 +6,23 @@ import styles from "./auth-form.module.css";
 
 type AuthPasswordInputProps = Omit<ComponentPropsWithoutRef<"input">, "type"> & {
   id: string;
+  visibilityLabel?: string;
 };
 
 /** Password field with an accessible visibility toggle. */
-export function AuthPasswordInput({ id, ...props }: AuthPasswordInputProps) {
+export function AuthPasswordInput({ id, visibilityLabel = "密码", ...props }: AuthPasswordInputProps) {
   const [visible, setVisible] = useState(false);
 
   return (
     <div className={styles.passwordControl}>
-      <input id={id} {...props} type={visible ? "text" : "password"} />
+      <input id={id} autoCapitalize="none" autoCorrect="off" spellCheck={false} {...props} type={visible ? "text" : "password"} />
       <button
         className={styles.passwordToggle}
         type="button"
         aria-controls={id}
-        aria-label={visible ? "隐藏密码" : "显示密码"}
+        aria-label={`${visible ? "隐藏" : "显示"}${visibilityLabel}`}
         aria-pressed={visible}
+        disabled={props.disabled}
         onClick={() => setVisible((current) => !current)}
       >
         <PasswordIcon hidden={visible} />

@@ -2,6 +2,29 @@
 
 Creeper Visual System 是 CreeperNext 的视觉与交互契约。它不要求 Landing、C 端和未来 Admin 长得一样，而是要求它们共享同一套 Token、组件边界、响应模型与质量门禁。
 
+## 当前视觉方向：CR 原标与中性配色
+
+使用用户在 DeerFlow 项目中提供的黑白 CR 原图，保存于 `public/brand/cr-solid.png`。源文件与引用项目中的资源保持字节一致，不重绘、不修改轮廓。Logo 仅用于导航、页脚和浏览器图标，不放大成首页展示区或认证侧栏。导航和页脚统一消费 `components/shared/brand.tsx`。原图白底在浅色表面使用 multiply，深底使用反色与 screen；Forced Colors 保留原图，不依赖滤镜表达功能。
+
+- 配色：黑白灰为主体，铜色仅用于链接、焦点与少量强调。明暗主题必须成对检查前景与背景，不能只替换主色。
+- 文案：用名称和用途描述内容，删除重复口号、全大写英文眉题、假窗口、无来源的状态与进度。不为填满区域增加一段说明。
+- 符号：只用于真实操作或状态。不在每个按钮后加箭头，不以斜杠、圆点和勾号装饰普通文字。
+- 首页：产品名称、简短介绍、账户入口、基础能力与真实目录说明。介绍区保持单栏，不用 Logo 占位填充第二栏。
+- 认证：表单最多 27.5rem，所有尺寸保持单栏居中，不添加装饰侧栏。表单标题与必要的安全提示始终保留。
+- 图片：使用 Next Image 明确宽高与响应式 sizes；展示区不直接向手机发送原尺寸图片。Logo 属于品牌资产，不用 CSS 几何重新拼造。
+- 正文使用至少 1rem，常用标签至少 0.875rem，次要元信息至少 0.75rem。任务标题为 2–2.5rem，不能使用英文展示字体的紧行距排中文。
+- 动效：保留必要的悬停与焦点反馈，不给 Logo、表单或正文添加循环和延迟入场。
+
+几何检查不代表视觉验收：需检查 390px 手机与 1280×800/832 桌面截图，并验证 320px、横屏、200% 文本放大、明暗主题和资源加载。原有社交分享图本轮未重新生成。
+
+### 简洁页面的执行约定
+
+- 账户表单输入框与提交按钮共享 `--size-control-comfortable`（3.25rem 最小高度），按钮用 `min-h-control-comfortable` 消费；圆角共享 `--ds-radius-control`，不在每个表单重复写尺寸。
+- 高度只是下限：输入框保留纵向内边距，字号放大后允许自然增高。密码显隐按钮保持独立的最小触控尺寸，在输入框内居中，不跟随整个字段拉伸。
+- 密码规则是完成任务所需的信息，至少 0.875rem；标签与规则允许换行，不靠缩小字体塞进一行。表单底部的账户切换提示按正常文字换行。
+- 官网和认证页头共享页面边距尺度；认证页在窄屏至少保留 1.25rem 与安全区域。窄屏或文本放大时，页头允许换行，不隐藏返回入口。
+- 目录说明使用按内容最小宽度自适应的网格：空间够时名称、说明两列对齐，不够时转为上下排列。不能以裁切或省略号掩盖内容溢出。
+
 ## 1. 分层与依赖方向
 
 ```text
@@ -56,7 +79,7 @@ components/**/*.module.css      # 复杂局部视觉；常规 UI 优先 Tailwind
 Primitive 表达“值是什么”，以 `--ref-*` 开头：
 
 ```css
---ref-color-lime-300: #d7ff3f;
+--ref-color-copper-700: #914a2e;
 --ref-space-6: 1.5rem;
 --ref-duration-fast: 140ms;
 ```
@@ -70,8 +93,8 @@ Primitive 表达“值是什么”，以 `--ref-*` 开头：
 Semantic 表达“值用来做什么”：
 
 ```css
---color-text-primary: var(--ref-color-stone-950);
---color-action-accent: var(--ref-color-lime-300);
+--color-text-primary: var(--ref-color-ink-950);
+--color-action-primary: var(--ref-color-ink-950);
 --space-page-gutter-inline-safe: max(...);
 --ds-radius-control: var(--ref-radius-sm);
 ```
@@ -122,7 +145,7 @@ Header 与 Button 是参考实现：
 
 - Header 用 `@container/header` 和 `@min-*/header` 控制自身导航，不猜 Viewport；
 - Button 用 Typed Class Map 暴露 `variant` / `size`，`cn()` 让调用方 Tailwind class 可靠覆盖；
-- Foundation Preview 保留 CSS Module，因为旋转、玻璃表面、伪元素和内部构图属于艺术样式。
+- Foundation Preview 是真实目录的说明列表，保留 CSS Module 管理局部排版，不模拟编辑器窗口或完成进度。
 
 不为了“看起来都用了 Tailwind”把长串渐变塞进 JSX，也不把普通 `display/grid/gap` 全藏进 CSS Module。
 
@@ -159,7 +182,7 @@ Account、C 端和未来 Admin 优先稳定的信息层级、可预测布局、�
 
 ### Auth 与安全设置 Pattern
 
-认证页是任务界面，不是第二个 Landing。登录与注册使用窄的单任务表单；需要 QR 或多步状态的安全引导使用独立宽版 Surface。不要把宣传卡、产品口号和长期安全管理表单堆在登录主任务旁边。
+认证页是任务界面，不是第二个 Landing。登录与注册使用窄的单任务表单；需要 QR 或多步状态的安全引导使用独立宽版 Surface。不得通过大 Logo、装饰侧栏、第二个 CTA 或宣传卡列表填充空白。
 
 强制 MFA 的参考 Pattern 是：
 

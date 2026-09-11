@@ -11,6 +11,9 @@ const semanticPairs = [
   ["inverse / muted", "--color-bg-inverse", "--color-text-inverse-muted"],
   ["primary / on-primary", "--color-action-primary", "--color-text-on-primary"],
   ["accent / on-accent", "--color-action-accent", "--color-text-on-accent"],
+  ["brand / foreground", "--color-brand-panel", "--color-brand-foreground"],
+  ["brand / muted", "--color-brand-panel", "--color-brand-muted"],
+  ["brand / highlight", "--color-brand-panel", "--color-brand-highlight"],
   ["danger / on-danger", "--color-status-danger", "--color-text-on-danger"],
 ] as const;
 
@@ -22,6 +25,12 @@ for (const route of routes) {
     );
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(route);
+    await expect(page.locator('link[rel="icon"]')).toHaveAttribute("href", "/brand/cr-solid.png");
+    for (const logo of await page.locator("img:visible").all()) {
+      await expect(logo).toHaveAttribute("src", /cr-solid/);
+      await logo.evaluate((element: HTMLImageElement) => element.decode());
+      expect(await logo.evaluate((element: HTMLImageElement) => element.naturalWidth)).toBeGreaterThan(0);
+    }
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
       .analyze();
@@ -47,9 +56,10 @@ test("the runtime dark theme keeps its semantic contrast", async ({ page }, test
   test.skip(testInfo.project.name !== "compact-1280x800", "One stable desktop layout covers theme aliases.");
 
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.addInitScript(() => document.documentElement.setAttribute("data-theme", "dark"));
   for (const route of ["/", "/login"] as const) {
     await page.goto(route);
+    await page.locator("html").evaluate((element) => element.setAttribute("data-theme", "dark"));
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
       .analyze();

@@ -1,10 +1,9 @@
 @layer base {
   body {
-    min-width: 20rem;
+    /* A rem-based page minimum doubles under text zoom and forces overflow. */
+    min-width: 0;
     color: var(--color-text-primary);
-    background:
-      radial-gradient(circle at 78% 18%, color-mix(in srgb, var(--color-action-accent) 26%, transparent), transparent 28rem),
-      var(--color-bg-canvas);
+    background: var(--color-bg-canvas);
     font-family:
       var(--font-geist-sans),
       "PingFang SC",

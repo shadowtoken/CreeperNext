@@ -1,24 +1,25 @@
 /* Themes only override semantic roles; components never switch raw values. */
 [data-theme="dark"] {
   color-scheme: dark;
-  --color-bg-canvas: #101210;
-  --color-bg-subtle: #1a1d1a;
-  --color-bg-muted: #242824;
-  --color-bg-inverse: var(--ref-color-stone-50);
-  --color-surface-default: #191c19;
-  --color-surface-raised: #202420;
-  --color-text-primary: var(--ref-color-stone-50);
-  --color-text-secondary: #bfc4bc;
-  --color-text-tertiary: #d5d8d2;
-  --color-text-link: #d5d8d2;
-  --color-text-inverse: var(--ref-color-stone-950);
-  --color-text-inverse-muted: var(--ref-color-stone-600);
+  --color-bg-canvas: #151514;
+  --color-bg-subtle: #20201e;
+  --color-bg-muted: var(--ref-color-ink-800);
+  --color-bg-inverse: var(--ref-color-ink-50);
+  --color-surface-default: #20201e;
+  --color-surface-raised: #282826;
+  --color-text-primary: var(--ref-color-ink-50);
+  --color-text-secondary: #c0c0ba;
+  --color-text-tertiary: var(--ref-color-ink-200);
+  --color-text-inverse: var(--ref-color-ink-950);
+  --color-text-inverse-muted: var(--ref-color-ink-600);
   --color-border-subtle: color-mix(in srgb, var(--ref-color-white) 16%, transparent);
-  --color-border-strong: #858b82;
-  --color-action-primary: var(--ref-color-stone-50);
+  --color-border-strong: var(--ref-color-ink-400);
+  --color-action-primary: var(--ref-color-ink-50);
+  --color-text-on-primary: var(--ref-color-ink-950);
   --color-action-primary-hover: var(--ref-color-white);
-  --color-text-accent-strong: var(--ref-color-lime-300);
-  --color-text-accent-on-inverse: var(--ref-color-lime-900);
+  --color-text-link: var(--ref-color-copper-300);
+  --color-text-accent-strong: var(--ref-color-copper-300);
+  --color-text-accent-on-inverse: var(--ref-color-copper-700);
   --color-status-success-text: #a9d3a3;
   --color-status-danger-text: #ffb4ac;
 }

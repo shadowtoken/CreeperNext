@@ -1,47 +1,16 @@
-/* Shared brand mark; product features must not override these internals. */
+/* Original CR artwork, shared by navigation and expressive brand surfaces. */
 @layer components {
-  .lockup {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6875rem;
-  }
-
-  .mark {
-    position: relative;
-    width: 2rem;
-    height: 2rem;
-    display: grid;
-    place-items: center;
-    border-radius: 0.625rem;
-    color: var(--color-text-on-primary);
-    background: var(--color-action-primary);
-    box-shadow:
-      0 0.375rem 1rem color-mix(in srgb, var(--color-action-primary) 16%, transparent),
-      0 0 0 1px color-mix(in srgb, var(--color-text-on-primary) 10%, transparent) inset;
-  }
-
-  .mark::after {
-    content: "";
-    position: absolute;
-    inset-block-start: 0.375rem;
-    inset-inline-end: 0.375rem;
-    width: 0.3125rem;
-    height: 0.3125rem;
-    border-radius: 999px;
-    background: var(--color-action-accent);
-  }
-
-  .mark span {
-    font-family: var(--font-geist-mono), monospace;
-    font-size: 0.875rem;
-    font-weight: 680;
-    line-height: 1;
-    translate: -0.0625rem 0.0625rem;
-  }
-
-  .wordmark {
-    font-size: 0.9375rem;
-    font-weight: 720;
-    letter-spacing: -0.035em;
-  }
+  .lockup { display: inline-flex; align-items: center; gap: 0.75rem; }
+  .mark { width: 2.25rem; height: 2.25rem; flex: none; display: block; overflow: hidden; mix-blend-mode: multiply; }
+  .artwork { width: 100%; height: 100%; display: block; object-fit: contain; transform: scale(1.25); }
+  .wordmark { color: var(--color-text-primary); font-size: 1rem; font-weight: 600; letter-spacing: -0.035em; }
+  .lockup[data-tone="inverse"] .wordmark { color: var(--color-brand-foreground); }
+  .lockup[data-size="display"] { display: grid; width: min(20rem, 100%); }
+  .lockup[data-size="display"] .mark { width: 100%; height: auto; aspect-ratio: 1; }
+  .mark[data-tone="inverse"], :global([data-theme="dark"]) .mark[data-tone="auto"] { mix-blend-mode: screen; }
+  .mark[data-tone="inverse"] .artwork, :global([data-theme="dark"]) .mark[data-tone="auto"] .artwork { filter: invert(1); }
+}
+@media (forced-colors: active) {
+  .mark[data-tone], :global([data-theme="dark"]) .mark[data-tone="auto"] { mix-blend-mode: normal; }
+  .mark[data-tone] .artwork, :global([data-theme="dark"]) .mark[data-tone="auto"] .artwork { filter: none; }
 }

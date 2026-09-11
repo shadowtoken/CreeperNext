@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { spawnSync } from "node:child_process";
 import test from "node:test";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
@@ -7,7 +8,7 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
 import { databaseUrl, databasePoolSize } from "../config/database";
 import { account, session, user } from "../server/db/schema/auth";
-import { createTestDatabase, validateTestDatabaseUrl } from "./support/database.mjs";
+import { createTestDatabase, testEnvironment, validateTestDatabaseUrl } from "./support/database.mjs";
 
 test("database configuration fails without leaking credentials", () => {
   assert.equal(databasePoolSize(undefined), 5);
@@ -46,6 +47,13 @@ test("PostgreSQL migrations preserve data and enforce transactions and auth cons
     assert.equal(created.emailVerified, false);
     assert.equal(created.twoFactorEnabled, false);
     assert.ok(created.createdAt instanceof Date);
+
+    const diagnostics = spawnSync(process.execPath, ["--import", "tsx", "scripts/doctor.ts", "--database"], {
+      env: { ...testEnvironment(database.url, "http://localhost:3000", "doctor_test"), NODE_ENV: "production" }, encoding: "utf8", timeout: 15000,
+    });
+    assert.equal(diagnostics.status, 0, diagnostics.stderr);
+    assert.match(diagnostics.stdout, /required auth tables exist/);
+    assert.doesNotMatch(diagnostics.stdout, /postgresql:/);
 
     // Applying the same migration again must preserve existing rows.
     await migrate(db, { migrationsFolder: "./drizzle" });

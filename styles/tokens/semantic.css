@@ -2,32 +2,37 @@
 :root {
   color-scheme: light;
 
-  --color-bg-canvas: var(--ref-color-stone-100);
-  --color-bg-subtle: var(--ref-color-stone-150);
-  --color-bg-muted: var(--ref-color-stone-200);
-  --color-bg-inverse: var(--ref-color-stone-950);
-  --color-surface-default: var(--ref-color-stone-0);
+  --color-bg-canvas: var(--ref-color-ink-25);
+  --color-bg-subtle: var(--ref-color-ink-50);
+  --color-bg-muted: var(--ref-color-ink-100);
+  --color-bg-inverse: var(--ref-color-ink-950);
+  --color-surface-default: var(--ref-color-white);
   --color-surface-raised: var(--ref-color-white);
-  --color-text-primary: var(--ref-color-stone-950);
-  --color-text-secondary: var(--ref-color-stone-500);
-  --color-text-tertiary: var(--ref-color-stone-600);
-  --color-text-link: var(--ref-color-stone-700);
+  --color-text-primary: var(--ref-color-ink-950);
+  --color-text-secondary: var(--ref-color-ink-500);
+  --color-text-tertiary: var(--ref-color-ink-600);
+  --color-text-link: var(--ref-color-copper-700);
   --color-text-inverse: var(--ref-color-white);
-  --color-text-inverse-muted: var(--ref-color-stone-300);
-  --color-text-on-primary: var(--color-text-inverse);
-  --color-text-on-accent: var(--ref-color-stone-950);
+  --color-text-inverse-muted: var(--ref-color-ink-200);
+  --color-text-on-primary: var(--ref-color-white);
+  --color-text-on-accent: var(--ref-color-ink-950);
   --color-text-on-danger: var(--ref-color-white);
   --color-text-accent-on-inverse: var(--color-action-accent);
-  --color-border-subtle: color-mix(in srgb, var(--ref-color-stone-950) 14%, transparent);
-  --color-border-strong: var(--ref-color-stone-450);
+  --color-border-subtle: var(--ref-color-ink-200);
+  --color-border-strong: var(--ref-color-ink-400);
   --color-border-inverse: color-mix(in srgb, var(--color-text-inverse) 28%, transparent);
-  --color-action-primary: var(--ref-color-stone-950);
-  --color-action-primary-hover: var(--ref-color-stone-850);
-  --color-action-accent: var(--ref-color-lime-300);
-  --color-action-accent-strong: var(--ref-color-lime-400);
-  --color-text-accent-strong: var(--ref-color-lime-900);
-  --color-decoration-muted: var(--ref-color-stone-300);
-  --color-focus-ring: var(--ref-color-lime-700);
+  --color-action-primary: var(--ref-color-ink-950);
+  --color-action-primary-hover: var(--ref-color-ink-800);
+  --color-action-accent: var(--ref-color-copper-100);
+  --color-action-accent-strong: var(--ref-color-copper-300);
+  --color-text-accent-strong: var(--ref-color-copper-700);
+  --color-decoration-muted: var(--ref-color-ink-200);
+  --color-focus-ring: var(--ref-color-copper-700);
+  /* Expressive brand panels stay dark in both application themes. */
+  --color-brand-panel: var(--ref-color-ink-950);
+  --color-brand-foreground: var(--ref-color-white);
+  --color-brand-muted: var(--ref-color-ink-200);
+  --color-brand-highlight: var(--ref-color-copper-300);
   --color-status-success: var(--ref-color-green-500);
   --color-status-success-text: var(--ref-color-green-700);
   --color-status-danger: var(--ref-color-red-800);
@@ -50,6 +55,7 @@
   --size-layout-card-min: 18rem;
   --size-layout-panel-min: 26rem;
   --size-target-min: 2.75rem;
+  --size-control-comfortable: 3.25rem;
   --size-site-header: clamp(4.375rem, 3.75rem + 1.5vw, 5.25rem);
   --size-site-header-safe: calc(var(--size-site-header) + env(safe-area-inset-top));
 
@@ -61,5 +67,5 @@
   --ds-shadow-raised: 0 1.125rem 3rem color-mix(in srgb, var(--ref-color-stone-950) 5%, transparent);
   --ds-shadow-overlay: 0 1.875rem 5rem color-mix(in srgb, var(--ref-color-stone-950) 12%, transparent);
   --ds-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--color-focus-ring) 18%, transparent);
-  --ds-shadow-button: 0 0.5rem 1.25rem color-mix(in srgb, var(--color-action-primary) 13%, transparent);
+  --ds-shadow-button: 0 0.125rem 0.25rem color-mix(in srgb, var(--color-action-primary) 8%, transparent);
 }

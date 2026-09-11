@@ -1,0 +1,30 @@
+@layer components {
+  .error,
+  .success {
+    min-width: 0;
+    margin: 0;
+    border-radius: var(--ds-radius-control);
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+
+  .error:not(:empty),
+  .success:not(:empty) {
+    padding: var(--ref-space-3) var(--ref-space-4);
+    border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  }
+
+  .error { color: var(--color-status-danger-text); }
+  .success { color: var(--color-status-success-text); }
+  .error:not(:empty) { background: color-mix(in srgb, var(--color-status-danger) 7%, transparent); }
+  .success:not(:empty) { background: color-mix(in srgb, var(--color-status-success) 9%, transparent); }
+
+  /* Empty live regions stay in the DOM without adding grid/flex gaps. */
+  .error:empty,
+  .success:empty { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
+}
+
+@media (forced-colors: active) {
+  .error:not(:empty), .success:not(:empty) { color: CanvasText; background: Canvas; border-color: CanvasText; }
+}

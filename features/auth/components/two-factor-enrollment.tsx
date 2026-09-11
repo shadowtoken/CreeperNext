@@ -14,6 +14,11 @@ import {
   isAuthenticatorCode,
 } from "@/core/auth/policy";
 import styles from "./two-factor-enrollment.module.css";
+import { Feedback } from "@/components/ui/feedback";
+import { useSubmission } from "../lib/use-submission";
+import { authFailure, type AuthFailure } from "../lib/auth-failure";
+import { focusField } from "../lib/focus-field";
+import { AuthRecoveryAction } from "./auth-recovery-action";
 
 type Stage = "password" | "scan";
 
@@ -30,22 +35,28 @@ export function TwoFactorEnrollment({
   const router = useRouter();
   const [stage, setStage] = useState<Stage>("password");
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [failure, setFailure] = useState<AuthFailure | null>(null);
+  const error = failure?.message;
   const [notice, setNotice] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
+  const { pending, start, finish } = useSubmission();
 
   async function beginEnrollment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pending || failure?.recovery) return;
     const formElement = event.currentTarget;
     resetMessages();
-    setPending(true);
+    if (!start()) return;
     const form = new FormData(formElement);
     const password = String(form.get("password") ?? "");
 
     try {
       const result = await authClient.twoFactor.enable({ password, method: "totp" });
-      if (result.error || !result.data || result.data.method !== "totp") {
-        setError(managementErrorMessage(result.error));
+      if (result.error) {
+        setFailure(authFailure(result.error, "enroll"));
+        return;
+      }
+      if (!result.data || result.data.method !== "totp") {
+        setFailure(authFailure({}, "enroll"));
         return;
       }
 
@@ -57,48 +68,49 @@ export function TwoFactorEnrollment({
       setStage("scan");
       formElement.reset();
     } catch {
-      setError("暂时无法生成安全密钥，请稍后重试。");
+      setFailure(authFailure({}, "enroll"));
     } finally {
-      setPending(false);
+      finish();
     }
   }
 
   async function completeEnrollment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!enrollment) return;
+    if (!enrollment || pending || failure?.recovery) return;
     resetMessages();
     const form = new FormData(event.currentTarget);
     const code = String(form.get("code") ?? "").replaceAll(" ", "").trim();
     if (!isAuthenticatorCode(code)) {
-      setError(`请输入身份验证器显示的 ${AUTHENTICATOR_CODE_LENGTH} 位数字。`);
+      setFailure({ message: `请输入身份验证器显示的 ${AUTHENTICATOR_CODE_LENGTH} 位数字。`, field: "code" });
+      focusField(event.currentTarget, "code");
       return;
     }
 
-    setPending(true);
+    if (!start()) return;
     try {
       const result = await authClient.twoFactor.verifyTotp({ code });
       if (result.error) {
-        setError("动态代码无效。等待身份验证器生成新代码后再试一次。");
+        setFailure(authFailure(result.error, "verify"));
+        finish();
         return;
       }
 
       router.replace(returnTo);
       router.refresh();
     } catch {
-      setError("暂时无法完成验证，请稍后重试。");
-    } finally {
-      setPending(false);
+      setFailure(authFailure({ status: 0 }, "verify"));
+      finish();
     }
   }
 
   async function copySetupSecret() {
-    if (!enrollment) return;
+    if (!enrollment || pending || failure?.recovery) return;
     resetMessages();
     try {
       await navigator.clipboard.writeText(enrollment.secret);
       setNotice("设置密钥已复制。");
     } catch {
-      setError("浏览器没有允许复制，请手动选择设置密钥。");
+      setFailure({ message: "浏览器没有允许复制，请手动选择设置密钥。" });
     }
   }
 
@@ -109,7 +121,7 @@ export function TwoFactorEnrollment({
   }
 
   function resetMessages() {
-    setError(null);
+    setFailure(null);
     setNotice(null);
   }
 
@@ -117,9 +129,9 @@ export function TwoFactorEnrollment({
     <div className={styles.flow}>
       <h1 className="sr-only">设置账户安全</h1>
 
-      <div className={styles.messageRegion} aria-live="polite">
-        {notice && <p className={styles.notice} role="status">{notice}</p>}
-        {error && <p className={styles.error} id="enrollment-error" role="alert">{error}</p>}
+      <div className={styles.messageRegion}>
+        <Feedback error={error} errorId="enrollment-error" success={notice} />
+        <AuthRecoveryAction recovery={failure?.recovery} returnTo={returnTo} onRefresh={() => router.refresh()} />
       </div>
 
       {stage === "password" && (
@@ -141,19 +153,24 @@ export function TwoFactorEnrollment({
                 id="enrollment-password"
                 name="password"
                 autoComplete="current-password"
+                visibilityLabel="当前密码"
+                enterKeyHint="done"
+                readOnly={pending}
                 minLength={PASSWORD_MIN_LENGTH}
                 maxLength={PASSWORD_MAX_LENGTH}
                 aria-describedby={error ? "enrollment-error" : undefined}
-                aria-invalid={error ? true : undefined}
+                aria-invalid={failure?.field === "password" || undefined}
                 required
               />
             </div>
             <Button
               className={styles.primaryAction}
-              disabled={pending}
+              pending={pending}
+              disabled={Boolean(failure?.recovery)}
+              pendingLabel="正在生成安全密钥…"
               type="submit"
             >
-              {pending ? "正在生成安全密钥…" : "继续设置"}
+              继续设置
             </Button>
           </form>
         </div>
@@ -180,7 +197,7 @@ export function TwoFactorEnrollment({
             <div className={styles.manualKey}>
               <div>
                 <span>无法扫描？手动输入密钥</span>
-                <button onClick={copySetupSecret} type="button">复制</button>
+                <button disabled={pending || Boolean(failure?.recovery)} onClick={copySetupSecret} type="button">复制</button>
               </div>
               <code data-enrollment-secret>{enrollment.secret}</code>
             </div>
@@ -188,22 +205,16 @@ export function TwoFactorEnrollment({
             <form className={styles.form} onSubmit={completeEnrollment}>
               <div className={styles.field}>
                 <label htmlFor="enrollment-code">输入身份验证器当前的 {AUTHENTICATOR_CODE_LENGTH} 位代码</label>
-                <input className={styles.codeInput} id="enrollment-code" name="code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern={`[0-9]{${AUTHENTICATOR_CODE_LENGTH}}`} minLength={AUTHENTICATOR_CODE_LENGTH} maxLength={AUTHENTICATOR_CODE_LENGTH} placeholder="000000" aria-describedby={error ? "enrollment-error" : undefined} aria-invalid={error ? true : undefined} required />
+                <input className={styles.codeInput} id="enrollment-code" name="code" type="text" inputMode="numeric" enterKeyHint="done" readOnly={pending} autoComplete="one-time-code" pattern={`[0-9]{${AUTHENTICATOR_CODE_LENGTH}}`} minLength={AUTHENTICATOR_CODE_LENGTH} maxLength={AUTHENTICATOR_CODE_LENGTH} placeholder="000000" aria-describedby={error ? "enrollment-error" : undefined} aria-invalid={failure?.field === "code" || undefined} required />
               </div>
-              <Button className={styles.primaryAction} disabled={pending} type="submit">{pending ? "正在验证…" : "验证并启用"}</Button>
-              <Button onClick={restartEnrollment} type="button" variant="ghost">重新生成二维码</Button>
+              <Button className={styles.primaryAction} disabled={Boolean(failure?.recovery)} pending={pending} pendingLabel="正在验证…" type="submit">验证并启用</Button>
+              <Button disabled={pending || Boolean(failure?.recovery)} onClick={restartEnrollment} type="button" variant="ghost">重新生成二维码</Button>
             </form>
           </div>
         </div>
       )}
     </div>
   );
-}
-
-function managementErrorMessage(error: { code?: string } | null) {
-  if (error?.code === "INVALID_PASSWORD") return "当前密码不正确。";
-  if (error?.code === "TWO_FACTOR_ALREADY_ENABLED") return "身份验证器已经启用，正在刷新账户状态。";
-  return "无法开始设置，请检查密码后重试。";
 }
 
 function ShieldIcon() {

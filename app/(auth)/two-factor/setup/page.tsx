@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { SecuritySetupShell, TwoFactorEnrollment } from "@/features/auth";
+import { SecuritySetupShell, TwoFactorEnrollment } from "@/features/auth/setup";
 import { AUTH_PATHS, safeReturnPath } from "@/core/auth/paths";
 import { getSession } from "@/server/auth";
 

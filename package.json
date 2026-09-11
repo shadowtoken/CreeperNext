@@ -7,6 +7,10 @@
     "node": ">=22.19.0"
   },
   "scripts": {
+    "setup:local": "node scripts/setup.mjs",
+    "check:env": "tsx scripts/doctor.ts",
+    "test:config": "tsx --test tests/configuration.test.ts",
+    "test:auth-ui": "tsx --test tests/auth-failure.test.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -20,9 +24,10 @@
     "db:check": "drizzle-kit check",
     "db:migrate": "tsx scripts/db-migrate.ts",
     "test:db": "tsx --test tests/database.test.ts",
+    "test:architecture": "node --test tests/architecture.test.mjs",
     "check:architecture": "node scripts/check-architecture.mjs",
     "check:secrets": "node scripts/check-secrets.mjs",
-    "test": "pnpm test:db && node tests/support/build-test-app.mjs && node --test tests/app.test.mjs",
+    "test": "pnpm test:config && pnpm test:auth-ui && pnpm test:architecture && pnpm test:db && node tests/support/build-test-app.mjs && node --test tests/build-boundaries.test.mjs tests/app.test.mjs",
     "test:responsive": "playwright test",
     "test:responsive:list": "playwright test --list",
     "test:responsive:install": "playwright install chromium",

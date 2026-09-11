@@ -6,30 +6,10 @@
   }
 
   .messageRegion {
+    display: grid;
+    gap: var(--ref-space-3);
     min-height: 0;
     margin-top: 1.25rem;
-  }
-
-  .notice,
-  .error {
-    margin: 0;
-    padding: 0.75rem 0.875rem;
-    border-radius: 0.75rem;
-    font-size: 0.8125rem;
-    line-height: 1.55;
-    text-align: center;
-  }
-
-  .notice {
-    border: 1px solid color-mix(in srgb, var(--color-status-success-text) 25%, transparent);
-    color: var(--color-status-success-text);
-    background: color-mix(in srgb, var(--color-status-success) 9%, transparent);
-  }
-
-  .error {
-    border: 1px solid color-mix(in srgb, var(--color-status-danger-text) 28%, transparent);
-    color: var(--color-status-danger-text);
-    background: color-mix(in srgb, var(--color-status-danger) 7%, transparent);
   }
 
   .passwordStage {

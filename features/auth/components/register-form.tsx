@@ -10,15 +10,21 @@ import { Button } from "@/components/ui/button";
 import { AUTH_PATHS } from "@/core/auth/paths";
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@/core/auth/policy";
 import styles from "./auth-form.module.css";
+import { Feedback } from "@/components/ui/feedback";
+import { useSubmission } from "../lib/use-submission";
+import { authFailure, type AuthFailure } from "../lib/auth-failure";
+import { focusField } from "../lib/focus-field";
 
 export function RegisterForm({ returnTo }: { returnTo: string }) {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
+  const [failure, setFailure] = useState<AuthFailure | null>(null);
+  const error = failure?.message;
+  const { pending, start, finish } = useSubmission();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
+    if (pending) return;
+    setFailure(null);
 
     const form = new FormData(event.currentTarget);
     const name = String(form.get("name") ?? "").trim();
@@ -26,26 +32,32 @@ export function RegisterForm({ returnTo }: { returnTo: string }) {
     const password = String(form.get("password") ?? "");
     const confirmation = String(form.get("confirmation") ?? "");
 
+    if (!name) {
+      setFailure({ message: "请输入称呼，不能只包含空格。", field: "name" });
+      focusField(event.currentTarget, "name");
+      return;
+    }
     if (password !== confirmation) {
-      setError("两次输入的密码不一致。");
+      setFailure({ message: "两次输入的密码不一致。", field: "confirmation" });
+      focusField(event.currentTarget, "confirmation");
       return;
     }
 
-    setPending(true);
+    if (!start()) return;
     try {
       const result = await authClient.signUp.email({ name, email, password });
 
       if (result.error) {
-        setError("暂时无法创建账户，请检查信息后重试。");
-        setPending(false);
+        setFailure(authFailure(result.error, "register"));
+        finish();
         return;
       }
 
       router.replace(`${AUTH_PATHS.login}?registered=1&returnTo=${encodeURIComponent(returnTo)}`);
       router.refresh();
     } catch {
-      setError("网络暂时不可用，请稍后重试。");
-      setPending(false);
+      setFailure(authFailure({ status: 0 }, "register"));
+      finish();
     }
   }
 
@@ -58,10 +70,11 @@ export function RegisterForm({ returnTo }: { returnTo: string }) {
           name="name"
           type="text"
           autoComplete="name"
+          readOnly={pending}
           maxLength={80}
           placeholder="你的名字"
+          aria-invalid={failure?.field === "name" || undefined}
           aria-describedby={error ? "register-error" : undefined}
-          aria-invalid={error ? true : undefined}
           required
         />
       </div>
@@ -72,10 +85,13 @@ export function RegisterForm({ returnTo }: { returnTo: string }) {
           name="email"
           type="email"
           autoComplete="email"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          readOnly={pending}
           inputMode="email"
           placeholder="you@example.com"
           aria-describedby={error ? "register-error" : undefined}
-          aria-invalid={error ? true : undefined}
           required
         />
       </div>
@@ -89,11 +105,12 @@ export function RegisterForm({ returnTo }: { returnTo: string }) {
             id="register-password"
             name="password"
             autoComplete="new-password"
+            readOnly={pending}
             minLength={PASSWORD_MIN_LENGTH}
             maxLength={PASSWORD_MAX_LENGTH}
             placeholder={`至少 ${PASSWORD_MIN_LENGTH} 位`}
+            aria-invalid={failure?.field === "password" || undefined}
             aria-describedby={error ? "register-password-hint register-error" : "register-password-hint"}
-            aria-invalid={error ? true : undefined}
             required
           />
         </div>
@@ -102,19 +119,22 @@ export function RegisterForm({ returnTo }: { returnTo: string }) {
           <AuthPasswordInput
             id="register-confirmation"
             name="confirmation"
+            visibilityLabel="确认密码"
             autoComplete="new-password"
+            enterKeyHint="done"
+            readOnly={pending}
             minLength={PASSWORD_MIN_LENGTH}
             maxLength={PASSWORD_MAX_LENGTH}
             placeholder="再次输入"
             aria-describedby={error ? "register-error" : undefined}
-            aria-invalid={error ? true : undefined}
+            aria-invalid={failure?.field === "confirmation" || undefined}
             required
           />
         </div>
       </div>
-      {error && <p className={styles.error} id="register-error" role="alert">{error}</p>}
-      <Button className={cn(styles.submit, "min-h-[3.25rem] rounded-[0.8125rem]")} disabled={pending} type="submit">
-        {pending ? "正在创建…" : "创建账户"}
+      <Feedback error={error} errorId="register-error" />
+      <Button className={cn(styles.submit, "min-h-control-comfortable")} pending={pending} pendingLabel="正在创建…" type="submit">
+        创建账户
       </Button>
     </form>
   );

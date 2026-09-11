@@ -8,10 +8,10 @@ export type ButtonVisualProps = {
 };
 
 const baseClassName = [
-  "inline-flex items-center justify-center gap-4 rounded-full border px-[1.375rem]",
+  "inline-flex items-center justify-center gap-4 rounded-[var(--ds-radius-control)] border px-[1.375rem]",
   "text-sm font-semibold shadow-button transition-[translate,color,background-color,border-color]",
   "duration-fast ease-standard not-disabled:hover:-translate-y-0.5 not-disabled:active:translate-y-0",
-  "disabled:cursor-wait disabled:translate-y-0 disabled:opacity-60",
+  "disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60 aria-busy:cursor-wait",
 ].join(" ");
 
 const sizeClassNames: Record<NonNullable<ButtonVisualProps["size"]>, string> = {
@@ -39,11 +39,18 @@ export function Button({
   className,
   size = "default",
   variant = "primary",
+  pending = false,
+  pendingLabel = "处理中…",
+  disabled,
+  type = "button",
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & ButtonVisualProps) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & ButtonVisualProps & { pending?: boolean; pendingLabel?: string }) {
   return (
-    <button className={buttonClassName({ className, size, variant })} {...props}>
-      {children}
-    </button>
+    <>
+      <button {...props} className={buttonClassName({ className, size, variant })} type={type} disabled={disabled || pending} aria-busy={pending || undefined}>
+        {pending ? pendingLabel : children}
+      </button>
+      <span className="sr-only" role="status" aria-atomic="true">{pending ? pendingLabel : null}</span>
+    </>
   );
 }

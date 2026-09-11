@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Brand } from "@/components/shared/brand";
 import { Kicker } from "@/components/ui/kicker";
 import { AUTH_PATHS } from "@/core/auth/paths";
-import { ChangePasswordForm, SignOutButton, TwoFactorSettings } from "@/features/auth";
+import { ChangePasswordForm, SignOutButton, TwoFactorSettings } from "@/features/auth/account";
 import { siteConfig } from "@/config/site";
 import { requireTwoFactorSession } from "@/server/auth";
 import styles from "./account.module.css";

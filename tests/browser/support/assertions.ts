@@ -193,6 +193,9 @@ export async function expectAuthTaskGeometry(page: Page) {
     if (!card || !form || !title || inputs.length === 0 || !submit) return null;
 
     const cardRect = card.getBoundingClientRect();
+    const pane = document.querySelector<HTMLElement>("[data-auth-task-pane]");
+    if (!pane) return null;
+    const paneRect = pane.getBoundingClientRect();
     const formRect = form.getBoundingClientRect();
     const inputRects = inputs.map((input) => input.getBoundingClientRect());
     const submitRect = submit.getBoundingClientRect();
@@ -207,7 +210,7 @@ export async function expectAuthTaskGeometry(page: Page) {
       card: {
         left: cardRect.left,
         width: cardRect.width,
-        centerOffset: (cardRect.left + cardRect.right) / 2 - viewportWidth / 2,
+        centerOffset: (cardRect.left + cardRect.right - paneRect.left - paneRect.right) / 2,
         borderWidth: Number.parseFloat(cardStyle.borderTopWidth),
         boxShadow: cardStyle.boxShadow,
       },
@@ -224,7 +227,7 @@ export async function expectAuthTaskGeometry(page: Page) {
   expect(geometry, "认证页必须渲染单一任务卡片、表单与主 CTA").not.toBeNull();
   if (!geometry) return;
 
-  expect(Math.abs(geometry.card.centerOffset), "认证任务应在视口中水平居中").toBeLessThanOrEqual(1);
+  expect(Math.abs(geometry.card.centerOffset), "认证任务在所有宽度保持单栏居中").toBeLessThanOrEqual(1);
   expect(geometry.card.width, "认证任务宽度不应超过 440px").toBeLessThanOrEqual(440.5);
   expect(geometry.formWidth, "认证表单需要保留可用宽度").toBeGreaterThanOrEqual(279);
 
@@ -243,7 +246,8 @@ export async function expectAuthTaskGeometry(page: Page) {
     expect(geometry.card.left, "320px 视口使用 20px 页边距").toBeCloseTo(20, 0);
   }
   if (geometry.viewportWidth === 390) {
-    expect(geometry.card.left, "390px 视口使用 24px 页边距").toBeCloseTo(24, 0);
+    expect(geometry.card.left, "窄屏认证页至少保留 20px 页边距").toBeGreaterThanOrEqual(20);
+    expect(geometry.card.left, "窄屏边距不得挤占表单可用空间").toBeLessThanOrEqual(24);
   }
   if (geometry.viewportWidth < 640) {
     expect(geometry.card.borderWidth, "移动端不绘制卡片边框").toBe(0);

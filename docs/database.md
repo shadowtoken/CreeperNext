@@ -17,7 +17,7 @@ scripts/auth-schema.mjs     使用锁定版本的 Better Auth Schema 生成器
 
 业务按需增加 `server/db/schema/<domain>.ts`。SQL 风格查询直接导入对应表即可；需要关系查询时，再把相关表和 relations 纳入 `client.ts` 的 schema。认证 Schema 独立生成，避免覆盖业务表。
 
-前端沿用 `features/<domain>/components + lib + index.ts`。服务端查询可放入该域的 `lib/server/`，每个服务端模块加 `import "server-only"`，不要通过浏览器组件使用的 `index.ts` 再导出数据库能力。不要求每个域都创建空的 Repository、Service 或 Transaction 文件。
+Feature 保持 `components + lib + 按需公开入口`。服务端查询放入该域私有的 `lib/server/`，每个服务端模块加 `import "server-only"`，通过域根 `server.ts` 显式导出必要查询。表单写入通过域根的模块级 `use server` 文件 `actions.ts` 暴露；不通过 UI 的 `index.ts` 汇总数据库能力。不要求每个域创建空的 Repository、Service 或 Transaction 文件。完整规则见 [工程边界规范](architecture.md)。
 
 - Server Component → 域内服务端查询 → Drizzle → PostgreSQL。
 - 表单 → Server Action → 输入校验 + 当前 Session/MFA + 资源权限 → 数据库写入。

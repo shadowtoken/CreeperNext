@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AuthShell, LoginForm } from "@/features/auth";
+import { AuthShell, LoginForm } from "@/features/auth/login";
 import { AUTH_PATHS, safeReturnPath } from "@/core/auth/paths";
 import { siteConfig } from "@/config/site";
 import { getSession } from "@/server/auth";
@@ -30,7 +30,6 @@ export default async function LoginPage({
 
   return (
     <AuthShell
-      eyebrow="CREEPER ACCOUNT"
       title={
         params.registered === "1"
           ? "继续安全设置"
@@ -45,7 +44,7 @@ export default async function LoginPage({
             ? "当前会话没有通过双因素验证，请重新输入密码继续。"
             : "使用邮箱和密码登录；随后使用身份验证器确认。"
       }
-      footer={<>还没有账户？<Link href={AUTH_PATHS.register}>免费创建</Link></>}
+      footer={<>还没有账户？<Link href={AUTH_PATHS.register}>注册</Link></>}
     >
       <LoginForm registered={params.registered === "1"} returnTo={returnTo} />
     </AuthShell>

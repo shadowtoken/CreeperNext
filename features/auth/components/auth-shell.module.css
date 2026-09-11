@@ -1,174 +1,28 @@
-/* Authentication shell composition. */
+/* One centered task surface at every width, without a decorative side panel. */
 @layer components {
   .page {
-    --auth-gutter: clamp(1.25rem, 6.15vw, 1.5rem);
-
+    --auth-gutter: max(1.25rem, var(--space-page-gutter));
     min-height: 100svh;
     padding-inline: max(var(--auth-gutter), env(safe-area-inset-left), env(safe-area-inset-right));
     padding-block-end: max(var(--auth-gutter), env(safe-area-inset-bottom));
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
-    isolation: isolate;
-    background:
-      radial-gradient(
-        circle at 50% -8rem,
-        color-mix(in srgb, var(--color-action-accent) 22%, transparent),
-        transparent min(34rem, 78vw)
-      ),
-      linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--color-surface-raised) 38%, transparent),
-        transparent 38%
-      ),
-      var(--color-bg-canvas);
+    background: var(--color-surface-default);
   }
-
-  .header {
-    width: min(var(--size-content-max), 100%);
-    min-height: var(--size-site-header-safe);
-    margin-inline: auto;
-    padding-block-start: env(safe-area-inset-top);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--ref-space-4);
-  }
-
-  .brand,
-  .back {
-    min-height: var(--size-target-min);
-    display: inline-flex;
-    align-items: center;
-  }
-
-  .brand {
-    font-weight: 700;
-    letter-spacing: -0.025em;
-  }
-
-  .back {
-    gap: var(--ref-space-2);
-    padding-inline: var(--ref-space-2);
-    color: var(--color-text-tertiary);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    transition: color var(--motion-fast) var(--motion-ease-standard);
-  }
-
-  .back span {
-    transition: translate var(--motion-fast) var(--motion-ease-standard);
-  }
-
-  .back:hover { color: var(--color-text-primary); }
-  .back:hover span { translate: 0.125rem -0.125rem; }
-
-  .main {
-    width: 100%;
-    min-width: 0;
-    min-height: 0;
-    padding-block: clamp(1.5rem, 6svh, 4.5rem);
-    display: grid;
-    place-items: center;
-  }
-
-  .card {
-    width: min(27.5rem, 100%);
-    min-width: 0;
-    padding: clamp(2rem, 5vw, 2.5rem);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--ds-radius-card);
-    background: color-mix(in srgb, var(--color-surface-raised) 94%, transparent);
-    box-shadow:
-      0 1px 0 color-mix(in srgb, var(--color-surface-raised) 90%, transparent) inset,
-      var(--ds-shadow-raised);
-    backdrop-filter: blur(1.25rem);
-  }
-
-  .intro { text-align: center; }
-
-  .eyebrow {
-    margin-block-end: var(--ref-space-3);
-    color: var(--color-text-tertiary);
-    letter-spacing: 0.12em;
-  }
-
-  .card h1 {
-    margin: 0;
-    font-size: clamp(2rem, calc(1.75rem + 1.1vw), 2.5rem);
-    font-weight: 650;
-    line-height: 1.16;
-    letter-spacing: -0.025em;
-    text-wrap: balance;
-    word-break: keep-all;
-    overflow-wrap: normal;
-  }
-
-  .description {
-    max-width: 23rem;
-    margin: var(--ref-space-3) auto 0;
-    color: var(--color-text-secondary);
-    font-size: 0.9375rem;
-    line-height: 1.7;
-    text-wrap: pretty;
-    overflow-wrap: anywhere;
-  }
-
-  .action {
-    width: 100%;
-    margin-block-start: var(--ref-space-8);
-  }
-
-  .switch {
-    min-height: var(--size-target-min);
-    margin-block-start: var(--ref-space-6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-secondary);
-    font-size: 0.8125rem;
-    line-height: 1.5;
-    text-align: center;
-  }
-
-  .switch a {
-    min-height: var(--size-target-min);
-    margin-inline-start: var(--ref-space-1);
-    padding-inline: var(--ref-space-1);
-    display: inline-flex;
-    align-items: center;
-    color: var(--color-text-link);
-    font-weight: 680;
-    text-decoration: underline;
-    text-decoration-color: color-mix(in srgb, currentColor 38%, transparent);
-    text-underline-offset: 0.25rem;
-    transition:
-      color var(--motion-fast) var(--motion-ease-standard),
-      text-decoration-color var(--motion-fast) var(--motion-ease-standard);
-  }
-
-  .switch a:hover {
-    color: var(--color-text-primary);
-    text-decoration-color: currentColor;
-  }
+  .header { width: min(var(--size-content-max), 100%); min-height: var(--size-site-header-safe); margin-inline: auto; padding-top: env(safe-area-inset-top); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; }
+  .brand, .back { min-height: var(--size-target-min); display: inline-flex; align-items: center; }
+  .back { gap: 0.5rem; padding-inline: 0.5rem; font-size: 0.875rem; color: var(--color-text-secondary); }
+  .back:hover { color: var(--color-text-link); }
+  .main { width: min(var(--size-content-max), 100%); min-width: 0; margin-inline: auto; padding-block: clamp(1.5rem, 3svh, 2rem); display: grid; place-items: center; container: auth-layout / inline-size; }
+  .composition { width: 100%; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; gap: 3rem; }
+  .taskPane { min-width: 0; display: grid; justify-items: center; }
+  .card { width: min(27.5rem, 100%); min-width: 0; padding: 1.25rem 0; }
+  .intro { text-align: left; }
+  .card h1 { margin: 0; font-size: clamp(2rem, 1.75rem + 1.1vw, 2.5rem); font-weight: 600; line-height: 1.25; letter-spacing: -0.025em; overflow-wrap: anywhere; }
+  .description { margin: 0.875rem 0 0; color: var(--color-text-secondary); font-size: 1rem; line-height: 1.75; overflow-wrap: anywhere; }
+  .action { width: 100%; margin-top: 1.75rem; }
+  .switch { min-height: var(--size-target-min); margin-top: 1.25rem; color: var(--color-text-secondary); font-size: 0.875rem; line-height: 1.6; text-align: center; overflow-wrap: anywhere; }
+  .switch a { min-width: var(--size-target-min); justify-content: center; min-height: var(--size-target-min); display: inline-flex; align-items: center; margin-left: 0.25rem; padding-inline: 0.25rem; color: var(--color-text-link); font-weight: 600; text-decoration: underline; text-underline-offset: 0.25rem; }
+  .switch a:hover { text-decoration-thickness: 2px; }
 }
-
-/* On a phone, the page itself is the surface: no card-within-a-screen effect. */
-@media (width < 40rem) {
-  .card {
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-    backdrop-filter: none;
-  }
-}
-
-/* Short viewports favor immediate task access and remain naturally scrollable. */
-@media (height < 44rem) {
-  .main { place-items: start center; }
-}
-
-@media (forced-colors: active) {
-  .card { background: Canvas; }
-}
+@media (height < 44rem) { .main { place-items: start center; } }

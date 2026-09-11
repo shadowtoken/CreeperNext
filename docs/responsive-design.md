@@ -45,6 +45,8 @@ GitHub Primer、Tailwind CSS、Vercel Commerce 与 Dub 的实现都说明，成�
 - Full-height 场景使用 `svh` / `dvh`，不用传统 `100vh` 猜测移动浏览器工具栏；
 - 低矮桌面同时参考 `svh`，不在 800px 高度附近突然切一套“Mac 模式”。
 
+`rem` 不是所有尺寸的万能选择：不要给 `html/body` 设置 `min-width: 20rem`。文字放大到 200% 时，这个下限会从 320px 变成 640px，迫使手机横向滚动。页面应允许收缩，具体组件通过自然换行和内在布局承接内容；本项目已用窄屏 404 的 200% 文本测试覆盖这一回归。
+
 ### 2.2 Intrinsic Layout
 
 如果只需要“装得下就并排，装不下就换行”，使用 Intrinsic Grid / Flex：
@@ -152,6 +154,7 @@ Vercel Commerce 的 Navbar、Grid、Gallery 和 Footer 是很好的实战参考�
 - Tailwind Utility：常规布局、间距、显示状态、基础 Variant 和 Named Container Query；
 - CSS Modules：页面艺术方向、复杂选择器、伪元素、渐变和特殊构图；
 - CSS Variables：主题、密度、Safe Area、动效与跨技术栈 Token；
+- AuthShell：所有宽度维持单栏任务表单并水平居中，不以大 Logo 或装饰侧栏填满宽屏；布局测试约束输入宽度、触控目标和主操作可达性；
 - 新代码默认窄版，空间增加时再增强；
 - 页面级低高度优先使用带 `svh` 的 Fluid 值，不创建突变的设备模式；
 - Page Query 必须用注释说明为什么它属于页面而不是组件；

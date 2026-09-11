@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AuthShell, RegisterForm } from "@/features/auth";
+import { AuthShell, RegisterForm } from "@/features/auth/register";
 import { AUTH_PATHS, safeReturnPath } from "@/core/auth/paths";
 import { siteConfig } from "@/config/site";
 import { getSession } from "@/server/auth";
@@ -31,9 +31,8 @@ export default async function RegisterPage({
 
   return (
     <AuthShell
-      eyebrow="CREATE ACCOUNT"
       title="创建账户"
-      description="先创建凭据；首次登录时必须绑定身份验证器，才能进入应用。"
+      description="注册后需登录并绑定身份验证器。"
       footer={<>已经有账户？<Link href={AUTH_PATHS.login}>直接登录</Link></>}
     >
       <RegisterForm returnTo={returnTo} />

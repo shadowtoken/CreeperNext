@@ -15,10 +15,10 @@ export function SiteHeader() {
         <Brand />
       </Link>
       <nav className="flex items-center gap-[clamp(var(--ref-space-2),2cqi,var(--ref-space-5))] text-sm" aria-label="主导航">
-        <Link className={cn(navLinkClass, "hidden @min-[60rem]/header:inline-flex")} href="/#principles">设计原则</Link>
+        <Link className={cn(navLinkClass, "hidden @min-[60rem]/header:inline-flex")} href="/#principles">基础能力</Link>
         <Link className={cn(navLinkClass, "hidden @min-[60rem]/header:inline-flex")} href="/#structure">工程结构</Link>
         <Link className={cn(navLinkClass, "ml-4 hidden @min-[32rem]/header:inline-flex")} href={AUTH_PATHS.login}>登录</Link>
-        <ButtonLink href={AUTH_PATHS.register} size="small">开始搭建</ButtonLink>
+        <ButtonLink href={AUTH_PATHS.register} size="small">注册</ButtonLink>
       </nav>
     </header>
   );

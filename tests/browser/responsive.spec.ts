@@ -7,11 +7,11 @@ import {
 } from "./support/assertions";
 
 const publicRoutes = [
-  { path: "/", heading: /从一个好地基/ },
+  { path: "/", heading: /CreeperNext/ },
   { path: "/login", heading: /欢迎回来/, auth: true },
   { path: "/register", heading: /创建账户/, auth: true },
-  { path: "/two-factor", heading: /再确认一次是你/, auth: true },
-  { path: "/missing-page", heading: /这里还没有盖房子/ },
+  { path: "/two-factor", heading: /身份验证/, auth: true },
+  { path: "/missing-page", heading: /页面不存在/ },
 ] as const;
 
 for (const route of publicRoutes) {

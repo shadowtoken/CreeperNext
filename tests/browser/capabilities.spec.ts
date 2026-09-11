@@ -43,7 +43,7 @@ test("registration errors remain reachable on a touch viewport", async ({ page }
   await page.getByLabel("称呼").fill("测试用户");
   await page.getByLabel("邮箱").fill("responsive-error@example.com");
   await page.getByLabel("密码", { exact: true }).fill("password-one");
-  await page.getByLabel("确认密码").fill("password-two");
+  await page.getByLabel("确认密码", { exact: true }).fill("password-two");
   await page.getByRole("button", { name: "创建账户" }).tap();
   await expect(page.locator("#register-error")).toBeVisible();
   await expectResponsiveLayout(page);
